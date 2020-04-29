@@ -1,0 +1,16 @@
+[package]
+name = "pacman"
+version = "0.1.0"
+authors = ["Lorenz Gorse <lorenz.gorse@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+diesel = { version = "1.4.4", features = ["postgres"] }
+rocket = "0.4.4"
+rocket_contrib = { version = "0.4.4", features = ["diesel_postgres_pool"] }
+multipart = "0.16.1"
+uuid = { version = "0.8.1", features = ["v4"] }
+fehler = "1.0.0"
+log = "0.4.8"
+tar = "0.4.26"
+xz2 = "0.1.6"
