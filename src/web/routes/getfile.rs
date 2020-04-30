@@ -13,13 +13,13 @@ use crate::web::db::Db;
 
 #[throws(Status)]
 #[get("/<account>/<repo>/<file>")]
-pub fn get_package(db: Db, account: String, repo: String, file: String) -> Stream<File> {
+pub fn getfile(db: Db, account: String, repo: String, file: String) -> Stream<File> {
     let account = get_account_by_name(&*db, &account)
         .map_err(|_| Status::NotFound)?;
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
         .map_err(|_| Status::NotFound)?;
 
-    if file.ends_with(".db.tar.gz") {
+    if file.ends_with(".db") {
         serve_db(&repo)
             .map_err(|_| Status::InternalServerError)?
     } else {

@@ -10,6 +10,6 @@ pub fn run() {
         .attach(Db::fairing())
         .mount("/", routes![
             routes::upload::upload,
-            routes::getpackage::get_package])
+            routes::getfile::getfile])
         .launch();
 }
