@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use diesel::PgConnection;
 use fehler::throws;
 use rocket::http::Status;
-use rocket::response::Stream;
 
 use crate::db::{get_account_by_name, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::models::Repo;
@@ -13,7 +12,7 @@ use crate::web::db::Db;
 
 #[throws(Status)]
 #[get("/<account>/<repo>/<file>")]
-pub fn getfile(db: Db, account: String, repo: String, file: String) -> Stream<File> {
+pub fn getfile(db: Db, account: String, repo: String, file: String) -> File {
     let account = get_account_by_name(&*db, &account)
         .map_err(|_| Status::NotFound)?;
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
@@ -28,17 +27,16 @@ pub fn getfile(db: Db, account: String, repo: String, file: String) -> Stream<Fi
 }
 
 #[throws]
-fn serve_db(repo: &Repo) -> Stream<File> {
+fn serve_db(repo: &Repo) -> File {
     let filename = format!("{}.db.tar.gz", repo.id);
     let path = PathBuf::new()
         .join("repos")
         .join(filename);
-    let f = File::open(path)?;
-    Stream::from(f)
+    File::open(path)?
 }
 
 #[throws(Status)]
-fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> Stream<File> {
+fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> File {
     // linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz
     let parts: Vec<_> = package.rsplitn(4, "-").collect();
     if parts.len() != 4 { Err(Status::NotFound)? }
@@ -64,7 +62,6 @@ fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> Stream<File
     let path = PathBuf::new()
         .join("packages")
         .join(filename);
-    let f = File::open(path)
-        .map_err(|_| Status::InternalServerError)?;
-    Stream::from(f)
+    File::open(path)
+        .map_err(|_| Status::InternalServerError)?
 }
