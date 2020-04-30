@@ -7,7 +7,23 @@ use models::*;
 use crate::db::models::Token;
 
 mod schema;
-pub(crate) mod models;
+pub mod models;
+
+#[throws]
+pub fn get_account(conn: &PgConnection, account_id: i32) -> Account {
+    use schema::account::dsl as a;
+    a::account
+        .filter(a::id.eq(account_id))
+        .first(conn)?
+}
+
+#[throws]
+pub fn get_account_by_name(conn: &PgConnection, name: &str) -> Account {
+    use schema::account::dsl as a;
+    a::account
+        .filter(a::name.eq(name))
+        .first(conn)?
+}
 
 #[throws]
 pub fn get_account_for_token(conn: &PgConnection, token: &str) -> Account {
@@ -16,14 +32,6 @@ pub fn get_account_for_token(conn: &PgConnection, token: &str) -> Account {
         .filter(t::the_token.eq(token))
         .first(conn)?;
     get_account(conn, token.account_id)?
-}
-
-#[throws]
-pub fn get_account(conn: &PgConnection, account_id: i32) -> Account {
-    use schema::account::dsl as a;
-    a::account
-        .filter(a::id.eq(account_id))
-        .first(conn)?
 }
 
 #[throws]
@@ -44,11 +52,12 @@ pub fn create_package(conn: &PgConnection, package: &NewPackage) {
 }
 
 #[throws]
-pub fn get_package(conn: &PgConnection, repo_id: i32, name: &str, version: &str) -> Package {
+pub fn get_package_by_repo(conn: &PgConnection, repo_id: i32, name: &str, version: &str, arch: &str) -> Package {
     use schema::package::dsl as p;
     p::package
         .filter(p::repo_id.eq(repo_id))
         .filter(p::name.eq(name))
         .filter(p::version.eq(version))
+        .filter(p::arch.eq(arch))
         .first(conn)?
 }

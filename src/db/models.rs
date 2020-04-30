@@ -13,6 +13,7 @@ pub struct Package {
     pub id: i32,
     pub name: String,
     pub version: String,
+    pub arch: String,
     pub size: i32,
     pub archive: String,
     pub signature: String,
@@ -24,6 +25,7 @@ pub struct Package {
 pub struct NewPackage {
     pub name: String,
     pub version: String,
+    pub arch: String,
     pub size: i32,
     pub archive: String,
     pub signature: String,

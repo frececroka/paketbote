@@ -10,6 +10,7 @@ table! {
         id -> Int4,
         name -> Varchar,
         version -> Varchar,
+        arch -> Varchar,
         size -> Int4,
         archive -> Varchar,
         signature -> Varchar,

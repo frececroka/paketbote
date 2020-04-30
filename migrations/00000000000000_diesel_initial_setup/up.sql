@@ -24,6 +24,7 @@ Create Table package
     id        Serial Primary Key,
     name      Varchar(255) Not Null,
     version   Varchar(255) Not Null,
+    arch      Varchar(255) Not Null,
     size      Integer      Not Null,
     archive   Varchar(255) Not Null,
     signature Varchar(255) Not Null,
