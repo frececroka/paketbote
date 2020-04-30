@@ -27,7 +27,8 @@ Create Table package
     size      Integer      Not Null,
     archive   Varchar(255) Not Null,
     signature Varchar(255) Not Null,
-    repo_id   Integer      Not Null References repo
+    repo_id   Integer      Not Null References repo,
+    Unique (repo_id, name, version)
 );
 
 Create Table repo_add

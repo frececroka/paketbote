@@ -1,10 +1,10 @@
 use diesel::prelude::*;
+use diesel::result::Error;
 use fehler::throws;
 
 use models::*;
 
 use crate::db::models::Token;
-use crate::error::*;
 
 mod schema;
 pub(crate) mod models;
@@ -41,4 +41,14 @@ pub fn create_package(conn: &PgConnection, package: &NewPackage) {
     diesel::insert_into(p::package)
         .values(package)
         .execute(conn)?;
+}
+
+#[throws]
+pub fn get_package(conn: &PgConnection, repo_id: i32, name: &str, version: &str) -> Package {
+    use schema::package::dsl as p;
+    p::package
+        .filter(p::repo_id.eq(repo_id))
+        .filter(p::name.eq(name))
+        .filter(p::version.eq(version))
+        .first(conn)?
 }

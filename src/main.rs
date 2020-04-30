@@ -29,6 +29,8 @@ use error::Error;
 
 use crate::db::{create_package, get_account_for_token, get_repo_by_account_and_name};
 use crate::db::models::NewPackage;
+use diesel::result::Error::DatabaseError;
+use diesel::result::DatabaseErrorKind::UniqueViolation;
 
 mod error;
 mod db;
@@ -118,7 +120,10 @@ fn upload(db: Db, principal: Principal, account: String, repo: String, boundary:
 
     info!("Adding package to database: {:?}", package);
     create_package(&*db, &package)
-        .map_err(|_| Status::InternalServerError)?;
+        .map_err(|err| match err {
+            DatabaseError(UniqueViolation, _) => Status::Conflict,
+            _ => Status::InternalServerError
+        })?;
 }
 
 #[throws(Status)]
