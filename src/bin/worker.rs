@@ -43,7 +43,7 @@ fn perform_repo_add(package: Package) {
     remove_file("database.files").ok();
     remove_file("database.files.tar.gz").ok();
 
-    let package_file = format!("{}-{}-{}.tar.xz",
+    let package_file = format!("{}-{}-{}.pkg.tar.xz",
         package.name, package.version, package.arch);
     remove_file(&package_file).ok();
 
