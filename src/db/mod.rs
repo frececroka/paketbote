@@ -52,6 +52,14 @@ pub fn create_package(conn: &PgConnection, package: &NewPackage) -> Package {
 }
 
 #[throws]
+pub fn get_package(conn: &PgConnection, id: i32) -> Package {
+    use schema::package::dsl as p;
+    p::package
+        .filter(p::id.eq(id))
+        .first(conn)?
+}
+
+#[throws]
 pub fn get_package_by_repo(conn: &PgConnection, repo_id: i32, name: &str, version: &str, arch: &str) -> Package {
     use schema::package::dsl as p;
     p::package
@@ -76,4 +84,12 @@ pub fn get_repo_add(conn: &PgConnection) -> RepoAdd {
     ra::repo_add
         .filter(ra::worker.is_null())
         .first(conn)?
+}
+
+#[throws]
+pub fn delete_repo_add(conn: &PgConnection, id: i32) {
+    use schema::repo_add::dsl as ra;
+    diesel::delete(ra::repo_add)
+        .filter(ra::id.eq(id))
+        .execute(conn)?;
 }
