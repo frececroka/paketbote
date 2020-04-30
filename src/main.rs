@@ -15,7 +15,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use fehler::throws;
-use log::warn;
+use log::{info, warn};
 use multipart::server::{Multipart, MultipartData};
 use rocket::{Data, Request};
 use rocket::data::DataStream;
@@ -91,15 +91,21 @@ fn upload(db: Db, principal: Principal, account: String, repo: String, boundary:
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
         .map_err(|_| Status::NotFound)?;
 
+    info!("Saving uploaded files to disk...");
     let ((package_file, package_size), (signature_file, signature_size)) =
         save_uploaded_files(data, &boundary.0)?;
+    info!("Received package of size {} and signature of size {}.",
+          package_size, signature_size);
 
     let total_size: i32 = (package_size + signature_size)
         .try_into().map_err(|_| Status::BadRequest)?;
+    info!("The total size of uploaded files is {}.", total_size);
 
+    info!("Loading PKGINFO from package...");
     let pkginfo = load_pkginfo(&package_file)?;
     let pkgname = pkginfo.get("pkgname").ok_or(Status::BadRequest)?;
     let pkgver = pkginfo.get("pkgver").ok_or(Status::BadRequest)?;
+    info!("Package has name {} and version {}", pkgname, pkgver);
 
     let package = NewPackage {
         name: pkgname.to_string(),
@@ -110,6 +116,7 @@ fn upload(db: Db, principal: Principal, account: String, repo: String, boundary:
         repo_id: repo.id,
     };
 
+    info!("Adding package to database: {:?}", package);
     create_package(&*db, &package)
         .map_err(|_| Status::InternalServerError)?;
 }
