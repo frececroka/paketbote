@@ -44,11 +44,11 @@ pub fn get_repo_by_account_and_name(conn: &PgConnection, account_id: i32, name: 
 }
 
 #[throws]
-pub fn create_package(conn: &PgConnection, package: &NewPackage) {
+pub fn create_package(conn: &PgConnection, package: &NewPackage) -> Package {
     use schema::package::dsl as p;
     diesel::insert_into(p::package)
         .values(package)
-        .execute(conn)?;
+        .get_result(conn)?
 }
 
 #[throws]
@@ -59,5 +59,21 @@ pub fn get_package_by_repo(conn: &PgConnection, repo_id: i32, name: &str, versio
         .filter(p::name.eq(name))
         .filter(p::version.eq(version))
         .filter(p::arch.eq(arch))
+        .first(conn)?
+}
+
+#[throws]
+pub fn create_repo_add(conn: &PgConnection, package_id: i32) {
+    use schema::repo_add::dsl as ra;
+    diesel::insert_into(ra::repo_add)
+        .values(NewRepoAdd { package_id })
+        .execute(conn)?;
+}
+
+#[throws]
+pub fn get_repo_add(conn: &PgConnection) -> RepoAdd {
+    use schema::repo_add::dsl as ra;
+    ra::repo_add
+        .filter(ra::worker.is_null())
         .first(conn)?
 }

@@ -46,6 +46,12 @@ pub struct RepoAdd {
     pub worker: Option<String>
 }
 
+#[derive(Debug, Insertable)]
+#[table_name="repo_add"]
+pub struct NewRepoAdd {
+    pub package_id: i32
+}
+
 #[derive(Debug, Queryable)]
 pub struct Token {
     pub id: i32,

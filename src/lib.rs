@@ -7,10 +7,12 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 
-mod error;
-mod db;
-mod web;
+use rocket::{Config, Rocket};
 
-fn main() {
-    web::run();
+pub mod error;
+pub mod db;
+pub mod web;
+
+pub fn get_config() -> Config {
+    Rocket::ignite().config().clone()
 }

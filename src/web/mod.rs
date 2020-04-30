@@ -5,7 +5,7 @@ mod routes;
 
 use db::Db;
 
-pub(crate) fn run() {
+pub fn run() {
     rocket::ignite()
         .attach(Db::fairing())
         .mount("/", routes![
