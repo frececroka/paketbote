@@ -60,6 +60,14 @@ pub fn get_package(conn: &PgConnection, id: i32) -> Package {
 }
 
 #[throws]
+pub fn get_packages_by_repo(conn: &PgConnection, repo_id: i32) -> Vec<Package> {
+    use schema::package::dsl as p;
+    p::package
+        .filter(p::repo_id.eq(repo_id))
+        .load(conn)?
+}
+
+#[throws]
 pub fn get_package_by_repo(conn: &PgConnection, repo_id: i32, name: &str, version: &str, arch: &str) -> Package {
     use schema::package::dsl as p;
     p::package

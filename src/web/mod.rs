@@ -16,7 +16,8 @@ pub fn run() {
         .register(catchers![
             catch_409_conflict])
         .mount("/", routes![
-            routes::upload::upload,
-            routes::getfile::getfile])
+            routes::list::list,
+            routes::getfile::getfile,
+            routes::upload::upload])
         .launch();
 }
