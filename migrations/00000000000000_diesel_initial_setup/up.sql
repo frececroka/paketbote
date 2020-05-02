@@ -23,15 +23,16 @@ Create Table repo
 
 Create Table package
 (
-    id        Serial Primary Key,
-    name      Varchar(255) Not Null,
-    version   Varchar(255) Not Null,
-    arch      Varchar(255) Not Null,
-    size      Integer      Not Null,
-    archive   Varchar(255) Not Null,
-    signature Varchar(255) Not Null,
-    created   Timestamp    Not Null Default current_timestamp,
-    repo_id   Integer      Not Null References repo,
+    id          Serial Primary Key,
+    name        Varchar(255) Not Null,
+    version     Varchar(255) Not Null,
+    arch        Varchar(255) Not Null,
+    size        Integer      Not Null,
+    archive     Varchar(255) Not Null,
+    signature   Varchar(255) Not Null,
+    compression Varchar(255) Not Null,
+    created     Timestamp    Not Null Default current_timestamp,
+    repo_id     Integer      Not Null References repo,
     Unique (repo_id, name, version)
 );
 

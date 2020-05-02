@@ -2,7 +2,7 @@
 {% block content %}
 <h1>der paketbote</h1>
 
-<p>This service can act as your private Arch Linux package repository. After creating an account, simply upload your packages with curl (or any other HTTP client of your choice):</p>
+<p>This service can act as your personal Arch Linux package repository. After creating an account, simply upload your packages with curl (or any other HTTP client of your choice):</p>
 <pre>
 export TOKEN="[api token]"
 export PKG="linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz"

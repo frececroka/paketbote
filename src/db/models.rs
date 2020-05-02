@@ -1,9 +1,18 @@
 #![allow(dead_code)]
 
+use std::io::Write;
+
 use chrono::NaiveDateTime;
+use diesel::backend::Backend;
+use diesel::deserialize::FromSql;
+use diesel::serialize::{IsNull, Output, ToSql};
+use diesel::sql_types::Text;
+use fehler::throws;
 use serde::Serialize;
 
 use crate::db::schema::*;
+use crate::error::Error;
+use std::str::FromStr;
 
 #[derive(Debug, Serialize, Queryable)]
 pub struct Account {
@@ -21,6 +30,48 @@ pub struct NewAccount {
     pub hashed_password: String
 }
 
+#[derive(Debug, Clone, Copy, Serialize, FromSqlRow, AsExpression)]
+#[sql_type = "Text"]
+pub enum Compression {
+    Zstd, Gzip, Lzma
+}
+
+impl FromStr for Compression {
+    type Err = Error;
+    #[throws]
+    fn from_str(string: &str) -> Self {
+        match string {
+            "xz" => Compression::Lzma,
+            "gz" => Compression::Gzip,
+            "zst" => Compression::Zstd,
+            _ => Err(Error)?
+        }
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Compression
+    where DB: Backend, String: FromSql<Text, DB>,
+{
+    #[throws(Box<dyn std::error::Error + Send + Sync>)]
+    fn from_sql(bytes: Option<&DB::RawValue>) -> Self {
+        String::from_sql(bytes)?.parse()?
+    }
+}
+
+impl<DB> ToSql<Text, DB> for Compression
+    where DB: Backend, String: ToSql<Text, DB>,
+{
+    #[throws(Box<dyn std::error::Error + Send + Sync>)]
+    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> IsNull {
+        let string = match self {
+            Compression::Lzma => "xz",
+            Compression::Gzip => "gz",
+            Compression::Zstd => "zst",
+        };
+        string.to_string().to_sql(out)?
+    }
+}
+
 #[derive(Debug, Queryable)]
 pub struct Package {
     pub id: i32,
@@ -30,6 +81,7 @@ pub struct Package {
     pub size: i32,
     pub archive: String,
     pub signature: String,
+    pub compression: Compression,
     pub created: NaiveDateTime,
     pub repo_id: i32
 }
@@ -43,6 +95,7 @@ pub struct NewPackage {
     pub size: i32,
     pub archive: String,
     pub signature: String,
+    pub compression: Compression,
     pub repo_id: i32
 }
 

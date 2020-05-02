@@ -2,6 +2,7 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs::File;
+use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -18,14 +19,15 @@ use uuid::Uuid;
 use xz2::read::XzDecoder;
 
 use crate::db::{create_package, create_repo_add, get_repo_by_account_and_name};
-use crate::db::models::{Account, NewPackage};
+use crate::db::models::{Account, NewPackage, Compression};
 use crate::error::Error;
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
+use libflate::gzip;
 
 #[throws(Status)]
-#[post("/<account>/<repo>", data = "<data>")]
-pub fn upload(db: Db, active_account: Account, account: String, repo: String, boundary: Boundary, data: Data) {
+#[post("/<account>/<repo>/<original_name>", data = "<data>")]
+pub fn upload(db: Db, active_account: Account, account: String, repo: String, original_name: String, boundary: Boundary, data: Data) {
     let account = if account == active_account.name {
         active_account
     } else {
@@ -47,8 +49,12 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, bo
         .try_into().map_err(|_| Status::BadRequest)?;
     info!("The total size of uploaded files is {}.", total_size);
 
+    let compression: Compression = original_name
+        .rsplitn(2, ".").next().ok_or(Status::BadRequest)?
+        .parse().map_err(|_| Status::BadRequest)?;
+
     info!("Loading PKGINFO from package...");
-    let pkginfo = load_pkginfo(&package_file)?;
+    let pkginfo = load_pkginfo(compression, &package_file)?;
     let pkgname = pkginfo.get("pkgname").ok_or(Status::BadRequest)?;
     let pkgver = pkginfo.get("pkgver").ok_or(Status::BadRequest)?;
     let arch = pkginfo.get("arch").ok_or(Status::BadRequest)?;
@@ -62,6 +68,7 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, bo
         size: total_size,
         archive: package_file,
         signature: signature_file,
+        compression: compression,
         repo_id: repo.id,
     };
 
@@ -109,18 +116,29 @@ fn save_file(filename: &str, mut data: MultipartData<&mut Multipart<DataStream>>
 }
 
 #[throws(Status)]
-fn load_pkginfo(package_file: &str) -> HashMap<String, String> {
+fn load_pkginfo(compression: Compression, package_file: &str) -> HashMap<String, String> {
     let package_path = PathBuf::new()
         .join("packages")
         .join(package_file);
     let compressed_reader = std::fs::File::open(package_path)
         .map_err(|_| Status::InternalServerError)?;
-    extract_pkginfo(compressed_reader)?
+    let decompressed_reader = decompress(compression, compressed_reader)
+        .map_err(|_| Status::BadRequest)?;
+    extract_pkginfo(decompressed_reader)?
+}
+
+#[throws(io::Error)]
+fn decompress(compression: Compression, reader: impl Read + 'static) -> Box<dyn Read + 'static> {
+    use Compression::*;
+    match compression {
+        Lzma => Box::new(XzDecoder::new(reader)) as Box<dyn Read>,
+        Zstd => Box::new(zstd::Decoder::new(reader)?) as Box<dyn Read>,
+        Gzip => Box::new(gzip::Decoder::new(reader)?) as Box<dyn Read>
+    }
 }
 
 #[throws(Status)]
 fn extract_pkginfo(reader: impl Read) -> HashMap<String, String> {
-    let reader = XzDecoder::new(reader);
     let mut archive = Archive::new(reader);
     let pkginfo_entry = archive.entries()
         .map_err(|_| Status::InternalServerError)?

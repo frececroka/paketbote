@@ -16,6 +16,7 @@ table! {
         size -> Int4,
         archive -> Varchar,
         signature -> Varchar,
+        compression -> Varchar,
         created -> Timestamp,
         repo_id -> Int4,
     }

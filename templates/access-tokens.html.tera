@@ -3,7 +3,7 @@
 <h1>access tokens</h1>
 
 <form class="one-line" method="post" action="/access-tokens">
-    <label>Create token <input type="text" name="name" placeholder="[name]"></label> <button>Create</button>
+    <label>create token <input type="text" name="name" placeholder="name"></label> <button>Create</button>
 </form>
 
 <ul>

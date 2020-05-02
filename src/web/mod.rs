@@ -10,6 +10,11 @@ mod db;
 mod principal;
 mod routes;
 
+#[catch(400)]
+fn catch_400_bad_request() -> String {
+    "The request you sent was malformed.\n".into()
+}
+
 #[catch(401)]
 fn catch_401_unauthorized() -> String {
     "Please provide a login cookie or access token.\n".into()
@@ -25,6 +30,7 @@ pub fn run() {
         .attach(Db::fairing())
         .attach(Template::fairing())
         .register(catchers![
+            catch_400_bad_request,
             catch_401_unauthorized,
             catch_409_conflict])
         .mount("/public",
