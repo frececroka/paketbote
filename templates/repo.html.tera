@@ -2,9 +2,22 @@
 {% block content %}
 <h1>repo: {{account.name}}/{{repo.name}}</h1>
 
-<ul>
+<table class="packages">
+    <thead>
+        <tr>
+            <th>name</th>
+            <th>version</th>
+            <th>arch</th>
+            <th>created</th>
+        </tr>
+    </thead>
     {% for package in packages %}
-        <li><a href="/{{account.name}}/{{repo.name}}/{{package.name}}">{{package.name}}</a></li>
+        <tr>
+            <td><a href="/{{account.name}}/{{repo.name}}/{{package.archive}}">{{package.name}}</a></td>
+            <td>{{package.version}}</td>
+            <td>{{package.arch}}</td>
+            <td>{{package.created}}</td>
+        </tr>
     {% endfor %}
-</ul>
+</table>
 {% endblock content %}

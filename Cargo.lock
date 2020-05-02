@@ -321,6 +321,7 @@ checksum = "33d7ca63eb2efea87a7f56a283acc49e2ce4b2bd54adf7465dc1d81fef13d8fc"
 dependencies = [
  "bitflags",
  "byteorder",
+ "chrono",
  "diesel_derives",
  "pq-sys",
  "r2d2",
@@ -889,6 +890,7 @@ name = "pacman"
 version = "0.1.0"
 dependencies = [
  "base64 0.12.0",
+ "chrono",
  "colored",
  "diesel",
  "fehler",

@@ -11,6 +11,10 @@ body {
     padding: 0;
 }
 
+* {
+    text-decoration-color: #9E9E9E;
+}
+
 nav {
     text-align: right;
 }
@@ -27,8 +31,7 @@ a, button.bt-link {
 }
 
 a:hover, button.bt-link:hover {
-    text-decoration: underline;
-    text-decoration-color: #9E9E9E;
+    text-decoration-line: underline;
     cursor: pointer;
 }
 
@@ -80,4 +83,20 @@ form.one-line input {
 
 form.one-line button {
     width: auto;
+}
+
+table {
+    width: 100%;
+}
+
+table th {
+    text-align: left;
+}
+
+table tr:hover td {
+    text-decoration-line: underline;
+}
+
+table.packages td:first-child {
+    width: 100%;
 }

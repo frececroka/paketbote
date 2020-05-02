@@ -30,6 +30,7 @@ Create Table package
     size      Integer      Not Null,
     archive   Varchar(255) Not Null,
     signature Varchar(255) Not Null,
+    created   Timestamp    Not Null Default current_timestamp,
     repo_id   Integer      Not Null References repo,
     Unique (repo_id, name, version)
 );

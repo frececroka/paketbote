@@ -9,10 +9,12 @@ use crate::db::{get_account_by_name, get_package_by_repo, get_repo_by_account_an
 use crate::db::models::Repo;
 use crate::error::Error;
 use crate::web::db::Db;
+use rocket::http::ContentType;
+use rocket::response::Content;
 
 #[throws(Status)]
 #[get("/<account>/<repo>/<file>")]
-pub fn getfile(db: Db, account: String, repo: String, file: String) -> File {
+pub fn getfile(db: Db, account: String, repo: String, file: String) -> Content<File> {
     let account = get_account_by_name(&*db, &account)
         .map_err(|_| Status::InternalServerError)?
         .ok_or(Status::NotFound)?;
@@ -20,12 +22,16 @@ pub fn getfile(db: Db, account: String, repo: String, file: String) -> File {
         .map_err(|_| Status::InternalServerError)?
         .ok_or(Status::NotFound)?;
 
-    if file.ends_with(".db") {
+    let file = if file.ends_with(".db") {
         serve_db(&repo)
             .map_err(|_| Status::InternalServerError)?
-    } else {
+    } else if file.ends_with(".tar.xz") {
         serve_package(&*db, &repo, &file)?
-    }
+    } else {
+        Err(Status::NotFound)?
+    };
+
+    Content(ContentType::Binary, file)
 }
 
 #[throws]
@@ -39,31 +45,25 @@ fn serve_db(repo: &Repo) -> File {
 
 #[throws(Status)]
 fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> File {
-    // linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz
     let parts: Vec<_> = package.rsplitn(4, "-").collect();
     if parts.len() != 4 { Err(Status::NotFound)? }
 
-    let name = parts[3];
+    let name = &parts[3];
     let version = format!("{}-{}", parts[2], parts[1]);
 
     let parts: Vec<_> = parts[0].splitn(2, ".").collect();
     if parts.len() != 2 { Err(Status::NotFound)? }
 
-    let arch = parts[0];
-    let ext = parts[1];
+    let arch = &parts[0];
 
     let package = get_package_by_repo(conn, repo.id, &name, &version, &arch)
-        .map_err(|_| Status::NotFound)?;
-
-    let filename = match ext {
-        "pkg.tar.xz" => package.archive,
-        "pkg.tar.xz.sig" => package.signature,
-        _ => Err(Status::NotFound)?
-    };
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
 
     let path = PathBuf::new()
         .join("packages")
-        .join(filename);
+        .join(package.archive);
+
     File::open(path)
         .map_err(|_| Status::InternalServerError)?
 }

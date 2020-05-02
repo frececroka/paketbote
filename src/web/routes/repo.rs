@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use colored::*;
 use diesel::PgConnection;
 use fehler::throws;
@@ -7,8 +8,9 @@ use rocket::http::Status;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
+use crate::db;
 use crate::db::{get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
-use crate::db::models::{Account, Package, Repo};
+use crate::db::models::{Account, Repo};
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::props::Props;
@@ -37,6 +39,42 @@ struct RepoContext {
     packages: Vec<Package>
 }
 
+#[derive(Serialize)]
+struct Package {
+    pub id: i32,
+    pub name: String,
+    pub version: String,
+    pub arch: String,
+    pub size: i32,
+    pub archive: String,
+    pub signature: String,
+    pub created: String,
+    pub repo_id: i32
+}
+
+impl From<db::models::Package> for Package {
+    fn from(package: db::models::Package) -> Self {
+        let created = DateTime::<Utc>::from_utc(package.created, Utc);
+        let created_fmt = created
+            .format("%Y-%m-%d")
+            .to_string();
+        let archive_file = format!("{}-{}-{}.pkg.tar.xz",
+            package.name, package.version, package.arch);
+        let signature_file = format!("{}.sig", archive_file);
+        Package {
+            id: package.id,
+            name: package.name,
+            version: package.version,
+            arch: package.arch,
+            size: package.size,
+            archive: archive_file,
+            signature: signature_file,
+            created: created_fmt,
+            repo_id: package.repo_id,
+        }
+    }
+}
+
 impl RepoContext {
     fn new(props: &Props, account: Account, repo: Repo, packages: Vec<Package>) -> RepoContext {
         let base = BaseContext::new(&props.account);
@@ -63,5 +101,8 @@ fn get_packages(db: &PgConnection, account: &str, repo: &str) -> (Account, Repo,
     let mut packages = get_packages_by_repo(&*db, repo.id)
         .map_err(|_| Status::InternalServerError)?;
     packages.sort_by_key(|p| p.name.clone());
+    let packages = packages.into_iter()
+        .map(|p| p.into())
+        .collect();
     (account, repo, packages)
 }

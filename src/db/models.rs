@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use chrono::NaiveDateTime;
 use serde::Serialize;
 
 use crate::db::schema::*;
@@ -20,7 +21,7 @@ pub struct NewAccount {
     pub hashed_password: String
 }
 
-#[derive(Debug, Serialize, Queryable)]
+#[derive(Debug, Queryable)]
 pub struct Package {
     pub id: i32,
     pub name: String,
@@ -29,6 +30,7 @@ pub struct Package {
     pub size: i32,
     pub archive: String,
     pub signature: String,
+    pub created: NaiveDateTime,
     pub repo_id: i32
 }
 
