@@ -5,7 +5,7 @@ use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{delete_token_for_account, get_tokens_for_account, create_token};
+use crate::db::{create_token, delete_token_for_account, get_tokens_for_account};
 use crate::db::models::{Account, NewToken, Token};
 use crate::web::ctx_base::BaseContext;
 use crate::web::props::Props;

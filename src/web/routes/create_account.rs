@@ -9,7 +9,7 @@ use rocket_contrib::templates::Template;
 use crate::db::create_account;
 use crate::db::models::NewAccount;
 use crate::web::db::Db;
-use crate::web::routes::{no_context, hash_password};
+use crate::web::routes::{hash_password, no_context};
 
 #[get("/create-account")]
 pub fn route_create_account() -> Template {

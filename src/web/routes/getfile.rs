@@ -59,6 +59,5 @@ fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> File {
         .join("packages")
         .join(package.archive);
 
-    File::open(path)
-        .map_err(|_| Status::InternalServerError)?
+    File::open(path).map_err(|_| Status::InternalServerError)?
 }

@@ -3,10 +3,10 @@ use rocket::http::Status;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::web::ctx_base::BaseContext;
-use crate::web::props::Props;
 use crate::db::{get_account_by_name, get_repos_by_account};
 use crate::db::models::{Account, Repo};
+use crate::web::ctx_base::BaseContext;
+use crate::web::props::Props;
 
 #[derive(Serialize)]
 struct AccountContext {

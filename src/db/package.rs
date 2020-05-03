@@ -1,7 +1,7 @@
 use diesel::PgConnection;
 use diesel::prelude::*;
-use fehler::throws;
 use diesel::result::Error;
+use fehler::throws;
 
 use crate::db::models::{NewPackage, Package};
 
