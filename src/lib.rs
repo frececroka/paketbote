@@ -34,11 +34,11 @@ pub fn parse_pkg_filename(package: &str) -> (String, String, String, Compression
     let name = parts[3].to_string();
     let version = format!("{}-{}", parts[2], parts[1]);
 
-    // x86_64.tar.zst
+    // x86_64.pkg.tar.zst
     let parts: Vec<_> = parts[0].split(".").collect();
-    if parts.len() != 3 { Err(Error)? }
+    if parts.len() != 4 { Err(Error)? }
     let arch = parts[0].to_string();
-    let compression = parts[1].parse()
+    let compression = parts[3].parse()
         .map_err(|_| Error)?;
 
     (name, version, arch, compression)
