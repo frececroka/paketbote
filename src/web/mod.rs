@@ -22,7 +22,7 @@ fn catch_401_unauthorized() -> String {
 
 #[catch(409)]
 fn catch_409_conflict() -> String {
-    "This package/version/arch combination already exists.\n".into()
+    "This package already exists in this version.\n".into()
 }
 
 pub fn run() {

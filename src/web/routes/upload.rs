@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use diesel::result::DatabaseErrorKind::UniqueViolation;
 use diesel::result::Error::DatabaseError;
 use fehler::throws;
+use libflate::gzip;
 use log::{info, warn};
 use multipart::server::{Multipart, MultipartData};
 use rocket::Data;
@@ -18,16 +19,16 @@ use tar::Archive;
 use uuid::Uuid;
 use xz2::read::XzDecoder;
 
-use crate::db::{create_package, create_repo_add, get_repo_by_account_and_name};
-use crate::db::models::{Account, NewPackage, Compression};
+use crate::db::{create_package, create_repo_add, get_package_by_repo, get_repo_by_account_and_name};
+use crate::db::models::{Account, Compression, NewPackage};
 use crate::error::Error;
+use crate::parse_pkg_filename;
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
-use libflate::gzip;
 
 #[throws(Status)]
-#[post("/<account>/<repo>/<original_name>", data = "<data>")]
-pub fn upload(db: Db, active_account: Account, account: String, repo: String, original_name: String, boundary: Boundary, data: Data) {
+#[post("/<account>/<repo>/<package>", data = "<data>")]
+pub fn upload(db: Db, active_account: Account, account: String, repo: String, package: String, boundary: Boundary, data: Data) {
     let account = if account == active_account.name {
         active_account
     } else {
@@ -39,6 +40,15 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, or
         .map_err(|_| Status::InternalServerError)?
         .ok_or(Status::NotFound)?;
 
+    let (name, version, arch, compression) = parse_pkg_filename(&package)
+        .map_err(|_| Status::BadRequest)?;
+    let existing_package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)
+        .map_err(|_| Status::InternalServerError)?;
+    if existing_package.is_some() {
+        info!("Aborting upload early, because package already exists in this version.");
+        Err(Status::Conflict)?
+    }
+
     info!("Saving uploaded files to disk...");
     let ((package_file, package_size), (signature_file, signature_size)) =
         save_uploaded_files(data, &boundary.0)?;
@@ -48,10 +58,6 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, or
     let total_size: i32 = (package_size + signature_size)
         .try_into().map_err(|_| Status::BadRequest)?;
     info!("The total size of uploaded files is {}.", total_size);
-
-    let compression: Compression = original_name
-        .rsplitn(2, ".").next().ok_or(Status::BadRequest)?
-        .parse().map_err(|_| Status::BadRequest)?;
 
     info!("Loading PKGINFO from package...");
     let pkginfo = load_pkginfo(compression, &package_file)?;

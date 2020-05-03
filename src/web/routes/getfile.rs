@@ -11,6 +11,7 @@ use rocket::response::Content;
 use crate::db::{get_account_by_name, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::models::Repo;
 use crate::error::Error;
+use crate::parse_pkg_filename;
 use crate::web::db::Db;
 
 #[throws(Status)]
@@ -47,16 +48,8 @@ fn serve_db(repo: &Repo) -> File {
 
 #[throws(Status)]
 fn serve_package(conn: &PgConnection, repo: &Repo, package: &str) -> File {
-    let parts: Vec<_> = package.rsplitn(4, "-").collect();
-    if parts.len() != 4 { Err(Status::NotFound)? }
-
-    let name = &parts[3];
-    let version = format!("{}-{}", parts[2], parts[1]);
-
-    let parts: Vec<_> = parts[0].splitn(2, ".").collect();
-    if parts.len() != 2 { Err(Status::NotFound)? }
-
-    let arch = &parts[0];
+    let (name, version, arch, _) = parse_pkg_filename(package)
+        .map_err(|_| Status::NotFound)?;
 
     let package = get_package_by_repo(conn, repo.id, &name, &version, &arch)
         .map_err(|_| Status::InternalServerError)?
