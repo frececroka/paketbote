@@ -9,10 +9,10 @@ use std::time::Duration;
 use diesel::{Connection, PgConnection};
 use fehler::throws;
 
+use pacman::{format_pkg_filename, get_config};
 use pacman::db::{delete_repo_add, get_package, get_repo_add};
 use pacman::db::models::Package;
 use pacman::error::Error;
-use pacman::get_config;
 
 fn main() {
     let config = get_config();
@@ -43,8 +43,7 @@ fn perform_repo_add(package: Package) {
     remove_file("database.files").ok();
     remove_file("database.files.tar.gz").ok();
 
-    let package_file = format!("{}-{}-{}.pkg.tar.xz",
-        package.name, package.version, package.arch);
+    let package_file = format_pkg_filename(&package);
     remove_file(&package_file).ok();
 
     let signature_file = format!("{}.sig", package_file);

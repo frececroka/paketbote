@@ -938,6 +938,7 @@ dependencies = [
  "multipart",
  "prettytable-rs",
  "rand 0.7.3",
+ "regex",
  "rocket",
  "rocket_contrib",
  "serde",

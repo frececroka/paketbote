@@ -8,7 +8,7 @@ use rocket::http::Status;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db;
+use crate::{db, format_pkg_filename};
 use crate::db::{get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
 use crate::db::models::{Account, Repo};
 use crate::web::ctx_base::BaseContext;
@@ -58,8 +58,7 @@ impl From<db::models::Package> for Package {
         let created_fmt = created
             .format("%Y-%m-%d")
             .to_string();
-        let archive_file = format!("{}-{}-{}.pkg.tar.xz",
-            package.name, package.version, package.arch);
+        let archive_file = format_pkg_filename(&package);
         let signature_file = format!("{}.sig", archive_file);
         Package {
             id: package.id,

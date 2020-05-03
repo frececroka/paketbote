@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
+use std::fmt;
 use std::io::Write;
+use std::str::FromStr;
 
 use chrono::NaiveDateTime;
 use diesel::backend::Backend;
@@ -12,7 +14,6 @@ use serde::Serialize;
 
 use crate::db::schema::*;
 use crate::error::Error;
-use std::str::FromStr;
 
 #[derive(Debug, Serialize, Queryable)]
 pub struct Account {
@@ -49,6 +50,17 @@ impl FromStr for Compression {
     }
 }
 
+impl fmt::Display for Compression {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let repr = match self {
+            Compression::Lzma => "xz",
+            Compression::Gzip => "gz",
+            Compression::Zstd => "zst",
+        };
+        write!(fmt, "{}", repr)
+    }
+}
+
 impl<DB> FromSql<Text, DB> for Compression
     where DB: Backend, String: FromSql<Text, DB>,
 {
@@ -63,12 +75,7 @@ impl<DB> ToSql<Text, DB> for Compression
 {
     #[throws(Box<dyn std::error::Error + Send + Sync>)]
     fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> IsNull {
-        let string = match self {
-            Compression::Lzma => "xz",
-            Compression::Gzip => "gz",
-            Compression::Zstd => "zst",
-        };
-        string.to_string().to_sql(out)?
+        self.to_string().to_sql(out)?
     }
 }
 
