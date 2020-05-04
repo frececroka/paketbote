@@ -50,6 +50,7 @@ pub fn run() {
             routes::repo::route_repo_html,
             routes::getfile::getfile,
             routes::upload::upload,
+            routes::remove::route_remove,
             routes::search::route_search,
             routes::search::route_search_results])
         .launch();

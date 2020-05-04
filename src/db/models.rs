@@ -90,6 +90,7 @@ pub struct Package {
     pub signature: String,
     pub compression: Compression,
     pub created: NaiveDateTime,
+    pub deleted: bool,
     pub repo_id: i32
 }
 
@@ -114,16 +115,18 @@ pub struct Repo {
 }
 
 #[derive(Debug, Serialize, Queryable)]
-pub struct RepoAdd {
+pub struct RepoAction {
     pub id: i32,
     pub package_id: i32,
+    pub action: String,
     pub worker: Option<String>
 }
 
 #[derive(Debug, Serialize, Insertable)]
-#[table_name="repo_add"]
-pub struct NewRepoAdd {
-    pub package_id: i32
+#[table_name="repo_action"]
+pub struct NewRepoAction {
+    pub package_id: i32,
+    pub action: String
 }
 
 #[derive(Debug, Serialize, Queryable)]

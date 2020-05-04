@@ -19,7 +19,7 @@ use tar::Archive;
 use uuid::Uuid;
 use xz2::read::XzDecoder;
 
-use crate::db::{create_package, create_repo_add, get_package_by_repo, get_repo_by_account_and_name};
+use crate::db::{create_package, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::models::{Account, Compression, NewPackage};
 use crate::error::Error;
 use crate::parse_pkg_filename;
@@ -84,7 +84,7 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
             DatabaseError(UniqueViolation, _) => Status::Conflict,
             _ => Status::InternalServerError
         })?;
-    create_repo_add(&*db, package.id)
+    create_repo_action(&*db, package.id, "add".to_string())
         .map_err(|_| Status::InternalServerError)?;
 }
 

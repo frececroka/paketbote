@@ -32,13 +32,15 @@ Create Table package
     signature   Varchar(255) Not Null,
     compression Varchar(255) Not Null,
     created     Timestamp    Not Null Default current_timestamp,
+    deleted     Boolean      Not Null Default False,
     repo_id     Integer      Not Null References repo,
     Unique (repo_id, name, version)
 );
 
-Create Table repo_add
+Create Table repo_action
 (
     id         Serial Primary Key,
     package_id Integer References package Not Null,
+    action     Varchar(255)               Not Null,
     worker     Varchar(255)
 );

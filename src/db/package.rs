@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use fehler::throws;
 
+use crate::db::delete_repo_action_by_package;
 use crate::db::models::{NewPackage, Package};
 
 use super::schema;
@@ -28,6 +29,7 @@ pub fn get_packages_by_repo(conn: &PgConnection, repo_id: i32) -> Vec<Package> {
     use schema::package::dsl as p;
     p::package
         .filter(p::repo_id.eq(repo_id))
+        .filter(p::deleted.eq(false))
         .load(conn)?
 }
 
@@ -48,6 +50,24 @@ pub fn get_packages_by_query(conn: &PgConnection, query: &str) -> Vec<Package> {
     use schema::package::dsl as p;
     p::package
         .filter(p::name.like(&format!("%{}%", query)))
+        .filter(p::deleted.eq(false))
         .load(conn)?
 }
 
+#[throws]
+pub fn remove_package(conn: &PgConnection, id: i32) {
+    use schema::package::dsl as p;
+    delete_repo_action_by_package(conn, id)?;
+    diesel::delete(p::package)
+        .filter(p::id.eq(id))
+        .execute(conn)?;
+}
+
+#[throws]
+pub fn set_package_deleted(conn: &PgConnection, id: i32, deleted: bool) {
+    use schema::package::dsl as p;
+    diesel::update(p::package)
+        .filter(p::id.eq(id))
+        .set(p::deleted.eq(deleted))
+        .execute(conn)?;
+}

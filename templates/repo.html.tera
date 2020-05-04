@@ -17,6 +17,12 @@
             <td>{{package.version}}</td>
             <td>{{package.arch}}</td>
             <td>{{package.created}}</td>
+            <td>
+                <form method="post" action="/{{account.name}}/{{repo.name}}/{{package.archive}}">
+                    <input type="hidden" name="_method" value="delete" />
+                    <button class="bt-link">[delete]</button>
+                </form>
+            </td>
         </tr>
     {% endfor %}
 </table>

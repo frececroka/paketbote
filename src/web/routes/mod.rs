@@ -14,6 +14,7 @@ pub mod account;
 pub mod access_tokens;
 pub mod repo;
 pub mod getfile;
+pub mod remove;
 pub mod upload;
 pub mod search;
 

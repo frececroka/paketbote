@@ -1,5 +1,5 @@
 use std::env::set_current_dir;
-use std::fs::{copy, remove_file, rename};
+use std::fs::{copy, File, remove_file, rename};
 use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
@@ -8,9 +8,11 @@ use std::time::Duration;
 
 use diesel::{Connection, PgConnection};
 use fehler::throws;
+use libflate::gzip;
+use tar::Archive;
 
-use pacman::{format_pkg_filename, get_config};
-use pacman::db::{delete_repo_add, get_package, get_repo_add};
+use pacman::{format_pkg_filename, get_config, parse_pkg_name};
+use pacman::db::{delete_repo_action, get_package, get_repo_action, remove_package};
 use pacman::db::models::Package;
 use pacman::error::Error;
 
@@ -26,10 +28,20 @@ fn main() {
     set_current_dir("worker").unwrap();
 
     loop {
-        if let Ok(repo_add) = get_repo_add(conn) {
-            let package = get_package(conn, repo_add.package_id).unwrap();
-            perform_repo_add(package).unwrap();
-            delete_repo_add(conn, repo_add.id).unwrap();
+        if let Some(repo_action) = get_repo_action(conn).unwrap() {
+            let package = get_package(conn, repo_action.package_id).unwrap();
+            match repo_action.action.as_str() {
+                "add" => {
+                    println!("Adding {:?}", package);
+                    perform_repo_add(&package).unwrap();
+                }
+                "remove" => {
+                    println!("Removing {:?}", package);
+                    perform_repo_rm(conn, &package).unwrap();
+                }
+                _ => unreachable!()
+            };
+            delete_repo_action(conn, repo_action.id).unwrap();
         } else {
             thread::sleep(Duration::from_secs(10));
         }
@@ -37,12 +49,7 @@ fn main() {
 }
 
 #[throws]
-fn perform_repo_add(package: Package) {
-    remove_file("database.db").ok();
-    remove_file("database.db.tar.gz").ok();
-    remove_file("database.files").ok();
-    remove_file("database.files.tar.gz").ok();
-
+fn perform_repo_add(package: &Package) {
     let package_file = format_pkg_filename(&package);
     remove_file(&package_file).ok();
 
@@ -55,24 +62,79 @@ fn perform_repo_add(package: Package) {
     let source = format!("../packages/{}", package.signature);
     symlink(&source, &signature_file)?;
 
-    let repo_source = format!("../repos/{}.db.tar.gz", package.repo_id);
-    if Path::new(&repo_source).exists() {
-        symlink(&repo_source, "database.db.tar.gz").ok();
-    }
+    let source_db = link_source_db(package.repo_id)?;
 
     let output = Command::new("repo-add")
         .arg("database.db.tar.gz")
         .arg(package_file)
         .output()?;
+    if !output.status.success() { Err(Error)? }
 
-    if !output.status.success() {
-        println!("{}", String::from_utf8(output.stderr)?);
-        Err(Error)?
+    update_source_db(&source_db)?;
+}
+
+#[throws]
+fn perform_repo_rm(conn: &PgConnection, package: &Package) {
+    let source_db = link_source_db(package.repo_id)?;
+
+    let packages = read_pkgs_from_db(&source_db)?;
+    let needle = (package.name.clone(), package.version.clone());
+    if packages.contains(&needle) {
+        let output = Command::new("repo-remove")
+            .arg("database.db.tar.gz")
+            .arg(&package.name)
+            .output()?;
+        if !output.status.success() { Err(Error)? }
     }
 
-    println!("{}", String::from_utf8(output.stdout)?);
+    remove_package(conn, package.id)?;
+    remove_file(format!("../packages/{}", package.archive))?;
+    remove_file(format!("../packages/{}", package.signature))?;
 
-    let repo_source_tmp = format!("{}.new", repo_source);
+    update_source_db(&source_db)?;
+}
+
+#[throws]
+fn read_pkgs_from_db(db: impl AsRef<Path>) -> Vec<(String, String)> {
+    let compressed_file = File::open(db)?;
+    let uncompressed_file = gzip::Decoder::new(compressed_file)?;
+    let mut archive = Archive::new(uncompressed_file);
+    archive.entries()?
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .map(|entry| entry.path())
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .filter_map(|path| {
+            let components = path.components().collect::<Vec<_>>();
+            if components.len() == 1 {
+                components[0].as_os_str().to_str()
+            } else {
+                None
+            }
+        })
+        .map(parse_pkg_name)
+        .collect::<Result<Vec<_>, _>>()?
+}
+
+#[throws]
+fn link_source_db(repo_id: i32) -> String {
+    remove_file("database.db").ok();
+    remove_file("database.db.tar.gz").ok();
+    remove_file("database.files").ok();
+    remove_file("database.files.tar.gz").ok();
+
+    let repo_source = format!("../repos/{}.db.tar.gz", repo_id);
+    if Path::new(&repo_source).exists() {
+        symlink(&repo_source, "database.db.tar.gz")?;
+    }
+
+    repo_source
+}
+
+#[throws]
+fn update_source_db(source_db: &String) {
+    let repo_source_tmp = format!("{}.new", source_db);
     copy("database.db.tar.gz", &repo_source_tmp)?;
-    rename(&repo_source_tmp, &repo_source)?;
+    rename(&repo_source_tmp, &source_db)?;
 }

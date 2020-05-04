@@ -1,4 +1,4 @@
-Drop Table repo_add;
+Drop Table repo_action;
 Drop Table package;
 Drop Table repo;
 Drop Table token;

@@ -18,6 +18,7 @@ table! {
         signature -> Varchar,
         compression -> Varchar,
         created -> Timestamp,
+        deleted -> Bool,
         repo_id -> Int4,
     }
 }
@@ -31,9 +32,10 @@ table! {
 }
 
 table! {
-    repo_add (id) {
+    repo_action (id) {
         id -> Int4,
         package_id -> Int4,
+        action -> Varchar,
         worker -> Nullable<Varchar>,
     }
 }
@@ -49,13 +51,13 @@ table! {
 
 joinable!(package -> repo (repo_id));
 joinable!(repo -> account (owner_id));
-joinable!(repo_add -> package (package_id));
+joinable!(repo_action -> package (package_id));
 joinable!(token -> account (account_id));
 
 allow_tables_to_appear_in_same_query!(
     account,
     package,
     repo,
-    repo_add,
+    repo_action,
     token,
 );
