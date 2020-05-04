@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use diesel::PgConnection;
 use fehler::throws;
+use log::info;
 use regex::Regex;
 use rocket::http::ContentType;
 use rocket::http::Status;
@@ -26,9 +27,11 @@ pub fn getfile(db: Db, account: String, repo: String, file: String) -> Content<F
 
     let archive_ext = Regex::new(r#"\.tar\.[a-z]+$"#).unwrap();
     let file = if file.ends_with(".db") {
+        info!("Serving database for repo {:?}.", repo);
         serve_db(&repo)
             .map_err(|_| Status::InternalServerError)?
     } else if archive_ext.is_match(&file) {
+        info!("Serving package from repo {:?}.", repo);
         serve_package(&*db, &repo, &file)?
     } else {
         Err(Status::NotFound)?

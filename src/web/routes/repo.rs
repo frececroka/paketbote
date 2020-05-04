@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use colored::*;
 use diesel::PgConnection;
 use fehler::throws;
@@ -8,12 +7,12 @@ use rocket::http::Status;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::{db, format_pkg_filename};
 use crate::db::{get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
 use crate::db::models::{Account, Repo};
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::props::Props;
+use crate::web::routes::Package;
 
 #[throws(Status)]
 #[get("/<account>/<repo>", format = "text/plain", rank = 5)]
@@ -37,41 +36,6 @@ struct RepoContext {
     account: Account,
     repo: Repo,
     packages: Vec<Package>
-}
-
-#[derive(Serialize)]
-struct Package {
-    pub id: i32,
-    pub name: String,
-    pub version: String,
-    pub arch: String,
-    pub size: i32,
-    pub archive: String,
-    pub signature: String,
-    pub created: String,
-    pub repo_id: i32
-}
-
-impl From<db::models::Package> for Package {
-    fn from(package: db::models::Package) -> Self {
-        let created = DateTime::<Utc>::from_utc(package.created, Utc);
-        let created_fmt = created
-            .format("%Y-%m-%d")
-            .to_string();
-        let archive_file = format_pkg_filename(&package);
-        let signature_file = format!("{}.sig", archive_file);
-        Package {
-            id: package.id,
-            name: package.name,
-            version: package.version,
-            arch: package.arch,
-            size: package.size,
-            archive: archive_file,
-            signature: signature_file,
-            created: created_fmt,
-            repo_id: package.repo_id,
-        }
-    }
 }
 
 impl RepoContext {

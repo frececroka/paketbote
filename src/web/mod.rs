@@ -49,6 +49,8 @@ pub fn run() {
             routes::repo::route_repo_text,
             routes::repo::route_repo_html,
             routes::getfile::getfile,
-            routes::upload::upload])
+            routes::upload::upload,
+            routes::search::route_search,
+            routes::search::route_search_results])
         .launch();
 }

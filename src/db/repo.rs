@@ -8,6 +8,14 @@ use crate::db::models::Repo;
 use super::schema;
 
 #[throws]
+pub fn get_repo(conn: &PgConnection, id: i32) -> Repo {
+    use schema::repo::dsl as r;
+    r::repo
+        .filter(r::id.eq(id))
+        .first(conn)?
+}
+
+#[throws]
 pub fn get_repos_by_account(conn: &PgConnection, account_id: i32) -> Vec<Repo> {
     use schema::repo::dsl as r;
     r::repo

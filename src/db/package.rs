@@ -43,3 +43,11 @@ pub fn get_package_by_repo(conn: &PgConnection, repo_id: i32, name: &str, versio
         .optional()?
 }
 
+#[throws]
+pub fn get_packages_by_query(conn: &PgConnection, query: &str) -> Vec<Package> {
+    use schema::package::dsl as p;
+    p::package
+        .filter(p::name.like(&format!("%{}%", query)))
+        .load(conn)?
+}
+

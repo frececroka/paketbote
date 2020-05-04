@@ -11,6 +11,8 @@
     <nav>
         <a href="/">home</a>
         ･
+        <a href="/search">search</a>
+        ･
         {% if base.account %}
         <a href="/{{base.account}}">{{base.account}}</a>
         ･

@@ -1,0 +1,7 @@
+{% extends "base" %}
+{% block content %}
+<h1>search</h1>
+<form class="one-line" action="/search">
+    <label>query <input type="text" name="query"></label> <button>query</button>
+</form>
+{% endblock content %}
