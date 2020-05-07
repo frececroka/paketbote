@@ -6,11 +6,9 @@ use std::io;
 use std::io::Read;
 use std::path::PathBuf;
 
-use diesel::result::DatabaseErrorKind::UniqueViolation;
-use diesel::result::Error::DatabaseError;
 use fehler::throws;
 use libflate::gzip;
-use log::{info, warn};
+use log::info;
 use multipart::server::{Multipart, MultipartData};
 use rocket::Data;
 use rocket::data::DataStream;
@@ -20,21 +18,18 @@ use uuid::Uuid;
 use xz2::read::XzDecoder;
 
 use crate::db::{create_package, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
+use crate::db::ExpectConflict;
 use crate::db::models::{Account, Compression, NewPackage};
 use crate::error::Error;
 use crate::parse_pkg_filename;
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
+use crate::web::routes::validate_access;
 
 #[throws(Status)]
 #[post("/<account>/<repo>/<package>", data = "<data>")]
 pub fn upload(db: Db, active_account: Account, account: String, repo: String, package: String, boundary: Boundary, data: Data) {
-    let account = if account == active_account.name {
-        active_account
-    } else {
-        warn!("The principal {} does not match the account {} provided in the URL.", active_account.name, account);
-        Err(Status::Unauthorized)?
-    };
+    let account = validate_access(active_account, account)?;
 
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
         .map_err(|_| Status::InternalServerError)?
@@ -80,10 +75,9 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
 
     info!("Adding package to database: {:?}", package);
     let package = create_package(&*db, &package)
-        .map_err(|err| match err {
-            DatabaseError(UniqueViolation, _) => Status::Conflict,
-            _ => Status::InternalServerError
-        })?;
+        .expect_conflict()
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::Conflict)?;
     create_repo_action(&*db, package.id, "add".to_string())
         .map_err(|_| Status::InternalServerError)?;
 }

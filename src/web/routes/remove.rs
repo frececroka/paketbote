@@ -1,5 +1,4 @@
 use fehler::throws;
-use log::warn;
 use rocket::http::Status;
 use rocket::response::Redirect;
 
@@ -7,6 +6,7 @@ use crate::db::{create_repo_action, get_package_by_repo, get_repo_by_account_and
 use crate::db::models::Account;
 use crate::parse_pkg_filename;
 use crate::web::db::Db;
+use crate::web::routes::validate_access;
 
 #[throws(Status)]
 #[delete("/<account>/<repo>/<package>")]
@@ -18,12 +18,7 @@ pub fn route_remove(
     package: String,
 ) -> Redirect
 {
-    let account = if account == active_account.name {
-        active_account
-    } else {
-        warn!("The principal {} does not match the account {} provided in the URL.", active_account.name, account);
-        Err(Status::Unauthorized)?
-    };
+    let account = validate_access(active_account, account)?;
 
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
         .map_err(|_| Status::InternalServerError)?

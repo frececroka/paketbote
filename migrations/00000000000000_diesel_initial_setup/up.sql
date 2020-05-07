@@ -18,7 +18,8 @@ Create Table repo
 (
     id       Serial Primary Key,
     name     Varchar(255) Not Null,
-    owner_id Integer      Not Null References account
+    owner_id Integer      Not Null References account,
+    Unique (owner_id, name)
 );
 
 Create Table package

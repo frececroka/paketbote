@@ -114,6 +114,13 @@ pub struct Repo {
     pub owner_id: i32
 }
 
+#[derive(Debug, Serialize, Insertable)]
+#[table_name="repo"]
+pub struct NewRepo {
+    pub name: String,
+    pub owner_id: i32
+}
+
 #[derive(Debug, Serialize, Queryable)]
 pub struct RepoAction {
     pub id: i32,

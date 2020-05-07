@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use fehler::throws;
 
-use crate::db::models::Repo;
+use crate::db::models::{NewRepo, Repo};
 
 use super::schema;
 
@@ -33,3 +33,10 @@ pub fn get_repo_by_account_and_name(conn: &PgConnection, account_id: i32, name: 
         .optional()?
 }
 
+#[throws]
+pub fn create_repo(conn: &PgConnection, repo: &NewRepo) -> Repo {
+    use schema::repo::dsl as r;
+    diesel::insert_into(r::repo)
+        .values(repo)
+        .get_result(conn)?
+}

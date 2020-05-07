@@ -4,15 +4,18 @@ use fehler::throws;
 use prettytable::{Cell, Row, Table};
 use prettytable::format::consts::FORMAT_CLEAN;
 use rocket::http::Status;
+use rocket::request::Form;
+use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
-use crate::db::models::{Account, Repo};
+use crate::db::{create_repo, get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
+use crate::db::ExpectConflict;
+use crate::db::models::{Account, NewRepo, Repo};
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::props::Props;
-use crate::web::routes::Package;
+use crate::web::routes::{Package, validate_access};
 
 #[throws(Status)]
 #[get("/<account>/<repo>", format = "text/plain", rank = 5)]
@@ -68,4 +71,33 @@ fn get_packages(db: &PgConnection, account: &str, repo: &str) -> (Account, Repo,
         .map(|p| p.into())
         .collect();
     (account, repo, packages)
+}
+
+#[derive(FromForm)]
+pub struct CreateRepo {
+    name: String
+}
+
+#[throws(Status)]
+#[post("/<account>", data = "<data>")]
+pub fn route_repo_create(
+    db: Db,
+    active_account: Account,
+    account: String,
+    data: Form<CreateRepo>,
+) -> Redirect
+{
+    let account = validate_access(active_account, account)?;
+
+    if data.name.len() == 0 {
+        Err(Status::BadRequest)?
+    }
+
+    let repo = NewRepo { name: data.name.clone(), owner_id: account.id };
+    let repo = create_repo(&*db, &repo)
+        .expect_conflict()
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::Conflict)?;
+
+    Redirect::to(format!("/{}/{}", account.name, repo.name))
 }

@@ -22,7 +22,7 @@ fn catch_401_unauthorized() -> String {
 
 #[catch(409)]
 fn catch_409_conflict() -> String {
-    "This package already exists in this version.\n".into()
+    "Cannot create resource because of a conflict.\n".into()
 }
 
 pub fn run() {
@@ -48,6 +48,7 @@ pub fn run() {
             routes::access_tokens::route_access_tokens_delete,
             routes::repo::route_repo_text,
             routes::repo::route_repo_html,
+            routes::repo::route_repo_create,
             routes::getfile::getfile,
             routes::upload::upload,
             routes::remove::route_remove,
