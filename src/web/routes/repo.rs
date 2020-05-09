@@ -38,13 +38,17 @@ struct RepoContext {
     base: BaseContext,
     account: Account,
     repo: Repo,
-    packages: Vec<Package>
+    packages: Vec<Package>,
+    can_edit: bool
 }
 
 impl RepoContext {
     fn new(props: &Props, account: Account, repo: Repo, packages: Vec<Package>) -> RepoContext {
         let base = BaseContext::new(&props.account);
-        RepoContext { base, account, repo, packages }
+        let can_edit = if let Some(active_account) = &props.account {
+            active_account.name == account.name
+        } else { false };
+        RepoContext { base, account, repo, packages, can_edit }
     }
 }
 
