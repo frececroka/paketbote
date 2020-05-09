@@ -18,6 +18,7 @@ table! {
         signature -> Varchar,
         compression -> Varchar,
         created -> Timestamp,
+        active -> Bool,
         deleted -> Bool,
         repo_id -> Int4,
     }

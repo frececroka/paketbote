@@ -1,6 +1,7 @@
-use diesel::PgConnection;
+use diesel::{PgConnection, sql_query};
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel::sql_types::Integer;
 use fehler::throws;
 
 use crate::db::delete_repo_action_by_package;
@@ -69,5 +70,20 @@ pub fn set_package_deleted(conn: &PgConnection, id: i32, deleted: bool) {
     diesel::update(p::package)
         .filter(p::id.eq(id))
         .set(p::deleted.eq(deleted))
+        .execute(conn)?;
+}
+
+#[throws]
+pub fn set_package_active(conn: &PgConnection, id: i32) {
+    let query = "\
+        Update package As p \
+        Set active = (p.id = q.id) \
+        From package as q \
+        Where \
+              q.id = $1 And \
+              p.repo_id = q.repo_id And \
+              p.name = q.name";
+    sql_query(query)
+        .bind::<Integer, _>(id)
         .execute(conn)?;
 }

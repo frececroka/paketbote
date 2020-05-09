@@ -15,7 +15,11 @@
         </tr>
     </thead>
     {% for package in packages %}
-        <tr>
+        {% if package.active %}
+            <tr>
+        {% else %}
+            <tr class="inactive">
+        {% endif %}
             <td><a href="/{{account.name}}/{{repo.name}}/{{package.archive}}">{{package.name}}</a></td>
             <td>{{package.version}}</td>
             <td>{{package.arch}}</td>

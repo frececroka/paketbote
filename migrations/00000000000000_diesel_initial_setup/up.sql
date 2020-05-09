@@ -33,6 +33,7 @@ Create Table package
     signature   Varchar(255) Not Null,
     compression Varchar(255) Not Null,
     created     Timestamp    Not Null Default current_timestamp,
+    active      Boolean      Not Null Default False,
     deleted     Boolean      Not Null Default False,
     repo_id     Integer      Not Null References repo,
     Unique (repo_id, name, version)

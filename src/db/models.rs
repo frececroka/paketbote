@@ -90,6 +90,7 @@ pub struct Package {
     pub signature: String,
     pub compression: Compression,
     pub created: NaiveDateTime,
+    pub active: bool,
     pub deleted: bool,
     pub repo_id: i32
 }

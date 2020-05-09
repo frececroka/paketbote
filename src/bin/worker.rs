@@ -12,7 +12,7 @@ use libflate::gzip;
 use tar::Archive;
 
 use pacman::{format_pkg_filename, get_config, parse_pkg_name};
-use pacman::db::{delete_repo_action, get_package, get_repo_action, remove_package};
+use pacman::db::{delete_repo_action, get_package, get_repo_action, remove_package, set_package_active};
 use pacman::db::models::Package;
 use pacman::error::Error;
 
@@ -33,7 +33,7 @@ fn main() {
             match repo_action.action.as_str() {
                 "add" => {
                     println!("Adding {:?}", package);
-                    perform_repo_add(&package).unwrap();
+                    perform_repo_add(conn, &package).unwrap();
                 }
                 "remove" => {
                     println!("Removing {:?}", package);
@@ -49,7 +49,7 @@ fn main() {
 }
 
 #[throws]
-fn perform_repo_add(package: &Package) {
+fn perform_repo_add(conn: &PgConnection, package: &Package) {
     let package_file = format_pkg_filename(&package);
     remove_file(&package_file).ok();
 
@@ -71,6 +71,7 @@ fn perform_repo_add(package: &Package) {
     if !output.status.success() { Err(Error)? }
 
     update_source_db(&source_db)?;
+    set_package_active(conn, package.id)?;
 }
 
 #[throws]

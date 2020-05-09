@@ -43,6 +43,7 @@ struct Package {
     pub archive: String,
     pub signature: String,
     pub created: String,
+    pub active: bool,
     pub repo_id: i32
 }
 
@@ -63,6 +64,7 @@ impl From<db::models::Package> for Package {
             archive: archive_file,
             signature: signature_file,
             created: created_fmt,
+            active: package.active,
             repo_id: package.repo_id,
         }
     }
