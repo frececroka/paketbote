@@ -1,6 +1,10 @@
+use std::cmp::Ordering;
+use std::process::Command;
+
 use colored::*;
 use diesel::PgConnection;
 use fehler::throws;
+use itertools::Itertools;
 use prettytable::{Cell, Row, Table};
 use prettytable::format::consts::FORMAT_CLEAN;
 use rocket::http::Status;
@@ -9,9 +13,10 @@ use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{create_repo, get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name};
+use crate::db::{create_repo, get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name, remove_package};
 use crate::db::ExpectConflict;
 use crate::db::models::{Account, NewRepo, Repo};
+use crate::error::Error;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::props::Props;
@@ -60,23 +65,6 @@ pub fn route_repo_html(props: Props, account: String, repo: String) -> Template 
     Template::render("repo", context)
 }
 
-#[throws(Status)]
-fn get_packages(db: &PgConnection, account: &str, repo: &str) -> (Account, Repo, Vec<Package>) {
-    let account = get_account_by_name(&*db, account)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?;
-    let repo = get_repo_by_account_and_name(&*db, account.id, repo)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?;
-    let mut packages = get_packages_by_repo(&*db, repo.id)
-        .map_err(|_| Status::InternalServerError)?;
-    packages.sort_by_key(|p| p.name.clone());
-    let packages = packages.into_iter()
-        .map(|p| p.into())
-        .collect();
-    (account, repo, packages)
-}
-
 #[derive(FromForm)]
 pub struct CreateRepo {
     name: String
@@ -104,4 +92,76 @@ pub fn route_repo_create(
         .ok_or(Status::Conflict)?;
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))
+}
+
+#[throws(Status)]
+#[post("/<account>/<repo>/delete-obsolete", rank = 4)]
+pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Redirect {
+    let (account, repo, mut packages) = get_packages(&*props.db, &account, &repo)?;
+    packages.sort_by_key(|p| p.name.clone());
+    let groups = packages.into_iter()
+        .group_by(|p| p.name.clone()).into_iter()
+        .map(|(_, g)| g.collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    for group in groups {
+        let mut group = group.iter().collect::<Vec<_>>();
+        for package in determine_obsolete(&mut group) {
+            remove_package(&*props.db, package.id)
+                .map_err(|_| Status::InternalServerError)?;
+            create_repo_action(&*props.db, package.id, "remove".to_string())
+                .map_err(|_| Status::InternalServerError)?;
+        }
+    }
+    Redirect::to(format!("/{}/{}", account.name, repo.name))
+}
+
+fn determine_obsolete<'a>(packages: &mut [&'a Package]) -> Vec<&'a Package> {
+    packages.sort_by(|p, q|
+        package_vercmp(&p.version, &q.version)
+            .unwrap().reverse());
+    packages.into_iter()
+        .skip_while(|p| !p.active)
+        .skip(1)
+        .map(|p| *p)
+        .collect()
+}
+
+#[throws]
+fn package_vercmp(v: &str, w: &str) -> Ordering {
+    let output = Command::new("vercmp")
+        .arg(v).arg(w)
+        .output()?;
+    if !output.status.success() {
+        Err(Error)?
+    }
+    let result: i32 = String::from_utf8(output.stdout)
+        .map_err(|_| Error)?
+        .trim().parse()
+        .map_err(|_| Error)?;
+    if result < 0 {
+        Ordering::Less
+    } else if result == 0 {
+        Ordering::Equal
+    } else if result > 0 {
+        Ordering::Greater
+    } else {
+        unreachable!()
+    }
+}
+
+#[throws(Status)]
+fn get_packages(db: &PgConnection, account: &str, repo: &str) -> (Account, Repo, Vec<Package>) {
+    let account = get_account_by_name(&*db, account)
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
+    let repo = get_repo_by_account_and_name(&*db, account.id, repo)
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
+    let mut packages = get_packages_by_repo(&*db, repo.id)
+        .map_err(|_| Status::InternalServerError)?;
+    packages.sort_by_key(|p| p.name.clone());
+    let packages = packages.into_iter()
+        .map(|p| p.into())
+        .collect();
+    (account, repo, packages)
 }

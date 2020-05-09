@@ -49,6 +49,7 @@ pub fn run() {
             routes::repo::route_repo_text,
             routes::repo::route_repo_html,
             routes::repo::route_repo_create,
+            routes::repo::route_delete_obsolete,
             routes::getfile::getfile,
             routes::upload::upload,
             routes::remove::route_remove,

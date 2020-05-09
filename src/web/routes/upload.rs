@@ -27,7 +27,7 @@ use crate::web::db::Db;
 use crate::web::routes::validate_access;
 
 #[throws(Status)]
-#[post("/<account>/<repo>/<package>", data = "<data>")]
+#[post("/<account>/<repo>/<package>", data = "<data>", rank = 5)]
 pub fn upload(db: Db, active_account: Account, account: String, repo: String, package: String, boundary: Boundary, data: Data) {
     let account = validate_access(active_account, account)?;
 

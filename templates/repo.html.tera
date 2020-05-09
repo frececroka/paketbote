@@ -2,6 +2,10 @@
 {% block content %}
 <h1>repo: {{account.name}}/{{repo.name}}</h1>
 
+<form method="post" action="/{{account.name}}/{{repo.name}}/delete-obsolete">
+    <button class="bt-link">[delete obsolete packages]</button>
+</form>
+
 <table class="packages">
     <thead>
         <tr>
