@@ -9,6 +9,7 @@ use crate::db::{create_token, delete_token_for_account, get_tokens_for_account};
 use crate::db::models::{Account, NewToken, Token};
 use crate::web::ctx_base::BaseContext;
 use crate::web::props::Props;
+use crate::web::routes::create_random_token;
 
 #[derive(Serialize)]
 struct AccessTokensContext {
@@ -62,10 +63,6 @@ pub fn route_access_tokens_create(props: Props, account: Account, token: Form<Cr
         .map_err(|_| Status::InternalServerError)?;
     let context = AccessTokenCreatedContext::new(&props, token);
     Template::render("access-token-created", context)
-}
-
-fn create_random_token() -> String {
-    base64::encode(rand::random::<[u8; 20]>())
 }
 
 #[delete("/access-tokens/<id>")]

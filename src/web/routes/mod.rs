@@ -78,3 +78,7 @@ fn validate_access(active_account: Account, claimed_account: String) -> Account 
         Err(Status::Unauthorized)?
     }
 }
+
+fn create_random_token() -> String {
+    base64::encode(rand::random::<[u8; 20]>())
+}
