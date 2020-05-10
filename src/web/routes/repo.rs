@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::panic;
 use std::process::Command;
 
 use colored::*;
@@ -104,8 +105,10 @@ pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Red
         .map(|(_, g)| g.collect::<Vec<_>>())
         .collect::<Vec<_>>();
     for group in groups {
-        let mut group = group.iter().collect::<Vec<_>>();
-        for package in determine_obsolete(&mut group) {
+        let group = group.iter().collect::<Vec<_>>();
+        let obsolete = determine_obsolete(group)
+            .map_err(|_| Status::InternalServerError)?;
+        for package in obsolete {
             remove_package(&*props.db, package.id)
                 .map_err(|_| Status::InternalServerError)?;
             create_repo_action(&*props.db, package.id, "remove".to_string())
@@ -115,15 +118,24 @@ pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Red
     Redirect::to(format!("/{}/{}", account.name, repo.name))
 }
 
-fn determine_obsolete<'a>(packages: &mut [&'a Package]) -> Vec<&'a Package> {
-    packages.sort_by(|p, q|
-        package_vercmp(&p.version, &q.version)
-            .unwrap().reverse());
+#[throws]
+fn determine_obsolete(packages: Vec<&Package>) -> Vec<&Package> {
+    let packages = sort_by_version(packages)?;
     packages.into_iter()
         .skip_while(|p| !p.active)
         .skip(1)
-        .map(|p| *p)
         .collect()
+}
+
+#[throws]
+fn sort_by_version(mut packages: Vec<&Package>) -> Vec<&Package> {
+    panic::set_hook(Box::new(|_| {}));
+    panic::catch_unwind(move || {
+        packages.sort_by(|p, q|
+            package_vercmp(&p.version, &q.version)
+                .unwrap().reverse());
+        packages
+    }).map_err(|_| Error)?
 }
 
 #[throws]
