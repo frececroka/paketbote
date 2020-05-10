@@ -3,7 +3,7 @@ use rocket::http::Status;
 use rocket::response::Redirect;
 
 use crate::db::{create_repo_action, get_package_by_repo, get_repo_by_account_and_name, set_package_deleted};
-use crate::db::models::Account;
+use crate::db::models::{Account, RepoActionOp};
 use crate::parse_pkg_filename;
 use crate::web::db::Db;
 use crate::web::routes::validate_access;
@@ -32,7 +32,7 @@ pub fn route_remove(
 
     set_package_deleted(&*db, package.id, true)
         .map_err(|_| Status::InternalServerError)?;
-    create_repo_action(&*db, package.id, "remove".to_string())
+    create_repo_action(&*db, package.id, RepoActionOp::Remove)
         .map_err(|_| Status::InternalServerError)?;
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))

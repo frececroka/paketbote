@@ -13,7 +13,7 @@ use tar::Archive;
 
 use pacman::{format_pkg_filename, get_config, parse_pkg_name};
 use pacman::db::{delete_repo_action, get_package, get_repo_action, remove_package, set_package_active};
-use pacman::db::models::Package;
+use pacman::db::models::{Package, RepoActionOp};
 use pacman::error::Error;
 
 fn main() {
@@ -30,16 +30,15 @@ fn main() {
     loop {
         if let Some(repo_action) = get_repo_action(conn).unwrap() {
             let package = get_package(conn, repo_action.package_id).unwrap();
-            match repo_action.action.as_str() {
-                "add" => {
+            match repo_action.action {
+                RepoActionOp::Add => {
                     println!("Adding {:?}", package);
                     perform_repo_add(conn, &package).unwrap();
                 }
-                "remove" => {
+                RepoActionOp::Remove => {
                     println!("Removing {:?}", package);
                     perform_repo_rm(conn, &package).unwrap();
                 }
-                _ => unreachable!()
             };
             delete_repo_action(conn, repo_action.id).unwrap();
         } else {

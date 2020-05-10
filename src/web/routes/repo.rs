@@ -14,9 +14,9 @@ use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{create_repo, get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name, remove_package};
+use crate::db::{create_repo, get_account_by_name, get_packages_by_repo, get_repo_by_account_and_name, remove_package, create_repo_action};
 use crate::db::ExpectConflict;
-use crate::db::models::{Account, NewRepo, Repo};
+use crate::db::models::{Account, NewRepo, Repo, RepoActionOp};
 use crate::error::Error;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
@@ -111,7 +111,7 @@ pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Red
         for package in obsolete {
             remove_package(&*props.db, package.id)
                 .map_err(|_| Status::InternalServerError)?;
-            create_repo_action(&*props.db, package.id, "remove".to_string())
+            create_repo_action(&*props.db, package.id, RepoActionOp::Remove)
                 .map_err(|_| Status::InternalServerError)?;
         }
     }

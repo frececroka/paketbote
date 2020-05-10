@@ -3,12 +3,12 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use fehler::throws;
 
-use crate::db::models::{NewRepoAction, RepoAction};
+use crate::db::models::{NewRepoAction, RepoAction, RepoActionOp};
 
 use super::schema;
 
 #[throws]
-pub fn create_repo_action(conn: &PgConnection, package_id: i32, action: String) {
+pub fn create_repo_action(conn: &PgConnection, package_id: i32, action: RepoActionOp) {
     use schema::repo_action::dsl as ra;
     diesel::insert_into(ra::repo_action)
         .values(NewRepoAction { package_id, action })

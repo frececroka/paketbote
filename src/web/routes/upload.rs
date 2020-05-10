@@ -19,7 +19,7 @@ use xz2::read::XzDecoder;
 
 use crate::db::{create_package, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::ExpectConflict;
-use crate::db::models::{Account, Compression, NewPackage};
+use crate::db::models::{Account, Compression, NewPackage, RepoActionOp};
 use crate::error::Error;
 use crate::parse_pkg_filename;
 use crate::web::boundary::Boundary;
@@ -78,7 +78,7 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
         .expect_conflict()
         .map_err(|_| Status::InternalServerError)?
         .ok_or(Status::Conflict)?;
-    create_repo_action(&*db, package.id, "add".to_string())
+    create_repo_action(&*db, package.id, RepoActionOp::Add)
         .map_err(|_| Status::InternalServerError)?;
 }
 
