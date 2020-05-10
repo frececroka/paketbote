@@ -129,7 +129,6 @@ fn determine_obsolete(packages: Vec<&Package>) -> Vec<&Package> {
 
 #[throws]
 fn sort_by_version(mut packages: Vec<&Package>) -> Vec<&Package> {
-    panic::set_hook(Box::new(|_| {}));
     panic::catch_unwind(move || {
         packages.sort_by(|p, q|
             package_vercmp(&p.version, &q.version)
