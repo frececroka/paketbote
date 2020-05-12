@@ -2,9 +2,28 @@
 {% block content %}
 <h1>repo: {{account.name}}/{{repo.name}}</h1>
 
+<p>To use this repository, add the following lines to your /etc/pacman.conf:</p>
+<pre>
+[{{account.name}}-{{repo.name}}]
+Server = https://paketbote.tk/{{account.name}}/{{repo.name}}</pre>
+
+{% if can_edit %}
+<p>To upload packages to this repository, run the following curl command:</p>
+<pre>
+export TOKEN="[api token]"
+export PKG="linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz"
+
+curl https://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
+	-H "Authorization: Bearer $TOKEN" \
+	-F "package=@$PKG" \
+	-F "signature=@$PKG.sig"</pre>
+{% endif %}
+
+{% if can_edit %}
 <form method="post" action="/{{account.name}}/{{repo.name}}/delete-obsolete">
-    <button class="bt-link">[delete obsolete packages]</button>
+    <p>You can delete packages that are inactive and have newer versions in this repository: <button class="bt-link">[delete obsolete packages]</button></p>
 </form>
+{% endif %}
 
 <table class="packages">
     <thead>
