@@ -8,7 +8,9 @@
         {{token.name}}
         <form method="post" action="/access-tokens/{{token.id}}" style="display: inline">
             <input type="hidden" name="_method" value="delete">
-            <button class="bt-link">[delete]</button>
+            <span class="react-delete-button">
+                <button class="bt-link">[delete]</button>
+            </span>
         </form>
     </li>
     {% endfor %}
