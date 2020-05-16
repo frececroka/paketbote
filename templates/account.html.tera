@@ -2,23 +2,21 @@
 {% block content %}
 <h1>account: {{account}}</h1>
 
-<ul>
+<ul class="list-group">
     {% for repo in repos %}
-        <li><a href="/{{account}}/{{repo.name}}">{{repo.name}}</a></li>
+        <li class="list-group-item"><a href="/{{account}}/{{repo.name}}">{{repo.name}}</a>, {{repo.packages}} packages, {{repo.byte_size | filesizeformat}}</li>
     {% endfor %}
+    <li class="list-group-item">
+        <form method="post" action="/{{account}}" class="form-inline">
+            <div class="form-row">
+                <div class="col">
+                    <input type="text" name="name" placeholder="name" class="form-control">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary">create</button>
+                </div>
+            </div>
+        </form>
+    </li>
 </ul>
-
-<div class="alert alert-secondary" role="alert">
-    <h5>create repo</h5>
-    <form method="post" action="/{{account}}">
-        <div class="form-row">
-            <div class="col">
-                <input type="text" name="name" placeholder="name" class="form-control">
-            </div>
-            <div class="col">
-                <button class="btn btn-primary">create</button>
-            </div>
-        </div>
-    </form>
-</div>
 {% endblock content %}
