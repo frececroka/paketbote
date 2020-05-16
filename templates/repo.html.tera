@@ -49,10 +49,12 @@ curl https://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
             <td>{{package.arch}}</td>
             <td>{{package.created}}</td>
             {% if can_edit %}
-            <td>
+            <td class="text-center">
                 <form method="post" action="/{{account.name}}/{{repo.name}}/{{package.archive}}">
                     <input type="hidden" name="_method" value="delete" />
-                    <button class="bt-link">[delete]</button>
+                    <div class="react-delete-button">
+                        <button class="bt-link">[delete]</button>
+                    </div>
                 </form>
             </td>
             {% endif %}

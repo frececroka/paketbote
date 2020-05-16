@@ -29,6 +29,10 @@ a:hover, button.bt-link:hover {
     cursor: pointer;
 }
 
+button.delete-confirm {
+    color: #F00;
+}
+
 table {
     width: 100%;
 }
@@ -55,4 +59,8 @@ table td {
 
 .inactive {
     opacity: 0.4;
+}
+
+.text-center {
+    text-align: center;
 }
