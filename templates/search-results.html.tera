@@ -2,8 +2,9 @@
 {% block content %}
 <h1>search results: {{query}}</h1>
 
-<table class="search-results">
-    <thead>
+<div class="table-responsive">
+    <table class="search-results table table-sm">
+        <thead>
         <tr>
             <th>repo</th>
             <th>name</th>
@@ -11,8 +12,8 @@
             <th>arch</th>
             <th>created</th>
         </tr>
-    </thead>
-    {% for result in results %}
+        </thead>
+        {% for result in results %}
         <tr>
             <td><a href="/{{result.account.name}}/{{result.repo.name}}">{{result.account.name}}/{{result.repo.name}}</a></td>
             <td><a href="/{{result.account.name}}/{{result.repo.name}}/{{result.package.archive}}">{{result.package.name}}</a></td>
@@ -20,6 +21,7 @@
             <td>{{result.package.arch}}</td>
             <td>{{result.package.created}}</td>
         </tr>
-    {% endfor %}
-</table>
+        {% endfor %}
+    </table>
+</div>
 {% endblock content %}
