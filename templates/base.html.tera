@@ -20,7 +20,7 @@
         <li class="nav-item"><a class="nav-link" href="/search">search</a></li>
         {% if base.account %}
         <li class="nav-item"><a class="nav-link" href="/{{base.account}}">{{base.account}}</a></li>
-        <li class="nav-item"><a class="nav-link" href="/access-tokens">access tokens</a></li>
+        <li class="nav-item"><a class="nav-link" href="/access-tokens">tokens</a></li>
         <li class="nav-item"><a class="nav-link" href="/logout">logout</a></li>
         {% else %}
         <li class="nav-item"><a class="nav-link" href="/login">login</a></li>
