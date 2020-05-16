@@ -21,7 +21,9 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
 
 {% if can_edit %}
 <form method="post" action="/{{account.name}}/{{repo.name}}/delete-obsolete">
-    <p>You can delete packages that are inactive and have newer versions in this repository: <button class="bt-link">[delete obsolete packages]</button></p>
+    <p>You can delete packages that are inactive and have newer versions in this repository:
+        <span class="react-delete-button"><button class="bt-link">[delete obsolete packages]</button></span>
+    </p>
 </form>
 {% endif %}
 
