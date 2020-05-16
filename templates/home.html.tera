@@ -7,7 +7,7 @@
 export TOKEN="[api token]"
 export PKG="linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz"
 
-curl https://upload.paketbote.tk/username/repository \
+curl http://upload.paketbote.tk/username/repository \
 	-H "Authorization: Bearer $TOKEN" \
 	-F "package=@$PKG" \
 	-F "signature=@$PKG.sig"</pre>

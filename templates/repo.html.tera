@@ -13,7 +13,7 @@ Server = https://paketbote.tk/{{account.name}}/{{repo.name}}</pre>
 export TOKEN="[api token]"
 export PKG="linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz"
 
-curl https://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
+curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
 	-H "Authorization: Bearer $TOKEN" \
 	-F "package=@$PKG" \
 	-F "signature=@$PKG.sig"</pre>
