@@ -2,10 +2,20 @@
 {% block content %}
 <h1>create account</h1>
 <form action="/create-account" method="post">
-    <label for="username">username</label>
-    <input id="username" name="username" type="text" />
-    <label for="password">password</label>
-    <input id="password" name="password" type="password"/>
-    <button>create account</button>
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="username">username</label>
+                <input id="username" name="username" type="text" class="form-control" />
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label for="password">password</label>
+                <input id="password" name="password" type="password" class="form-control"/>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary">create account</button>
 </form>
 {% endblock content %}

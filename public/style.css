@@ -1,22 +1,16 @@
-pre {
-    background-color: #E0E0E0;
-    border: 1px solid #9E9E9E;
-    border-radius: 6px;
-    padding: 5px;
-    margin-left: 10px;
+.container {
+    margin-top: 1em;
 }
 
-body {
-    margin: 0;
-    padding: 0;
+pre {
+    border-left: 3px solid #155724;
+    padding: 0.3em 0.3em 0.3em 0.7em;
+    color: #155724;
+    background-color: #d4edda;
 }
 
 * {
     text-decoration-color: #9E9E9E;
-}
-
-nav {
-    text-align: right;
 }
 
 a, button.bt-link {
@@ -33,56 +27,6 @@ a, button.bt-link {
 a:hover, button.bt-link:hover {
     text-decoration-line: underline;
     cursor: pointer;
-}
-
-#content {
-    width: 800px;
-    padding: 20px;
-    margin: auto;
-    background-color: #FFEBEE;
-}
-
-form {
-    display: inline;
-}
-
-form label:first-child {
-    margin-top: 0;
-}
-
-form label {
-    display: block;
-    margin-left: 4px;
-    margin-top: 15px;
-    margin-bottom: 5px;
-}
-
-form input, form button {
-    display: block;
-    width: 300px;
-    box-sizing: border-box;
-    margin: 4px 0;
-}
-
-form button {
-    margin-top: 15px;
-}
-
-form.one-line label, form.one-line input, form.one-line button {
-    display: inline;
-}
-
-form.one-line input, form.one-line button {
-    margin: 0;
-    padding: 0;
-}
-
-form.one-line input {
-    width: 200px;
-}
-
-form.one-line button {
-    width: auto;
 }
 
 table {

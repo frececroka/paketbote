@@ -2,13 +2,23 @@
 {% block content %}
 <h1>account: {{account}}</h1>
 
-<form class="one-line" method="post" action="/lorenz">
-    <label>create repo <input type="text" name="name" placeholder="name"></label> <button>create</button>
-</form>
-
 <ul>
     {% for repo in repos %}
         <li><a href="/{{account}}/{{repo.name}}">{{repo.name}}</a></li>
     {% endfor %}
 </ul>
+
+<div class="alert alert-secondary" role="alert">
+    <h5>create repo</h5>
+    <form method="post" action="/{{account}}">
+        <div class="form-row">
+            <div class="col">
+                <input type="text" name="name" placeholder="name" class="form-control">
+            </div>
+            <div class="col">
+                <button class="btn btn-primary">create</button>
+            </div>
+        </div>
+    </form>
+</div>
 {% endblock content %}

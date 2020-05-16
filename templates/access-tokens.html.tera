@@ -2,9 +2,19 @@
 {% block content %}
 <h1>access tokens</h1>
 
-<form class="one-line" method="post" action="/access-tokens">
-    <label>create token <input type="text" name="name" placeholder="name"></label> <button>create</button>
-</form>
+<div class="alert alert-secondary" role="alert">
+    <h5>create token</h5>
+    <form method="post" action="/access-tokens">
+        <div class="form-row">
+            <div class="col">
+                <input type="text" name="name" placeholder="name" class="form-control">
+            </div>
+            <div class="col">
+                <button class="btn btn-primary">create</button>
+            </div>
+        </div>
+    </form>
+</div>
 
 <ul>
     {% for token in tokens %}

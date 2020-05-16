@@ -2,10 +2,26 @@
 {% block content %}
 <h1>login</h1>
 <form action="/login" method="post">
-    <label for="username">username</label>
-    <input id="username" name="username" type="text" />
-    <label for="password">password</label>
-    <input id="password" name="password" type="password"/>
-    <button>login</button>
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label for="username">username</label>
+                <input id="username" name="username" type="text" class="form-control {% if error == "wrong-username" %} is-invalid {% endif %}" />
+                {% if error == "wrong-username" %}
+                <div class="invalid-feedback">unknown username</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <label for="password">password</label>
+                <input id="password" name="password" type="password" class="form-control {% if error == "wrong-password" %} is-invalid {% endif %}"/>
+                {% if error == "wrong-password" %}
+                <div class="invalid-feedback">wrong password</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary">login</button>
 </form>
 {% endblock content %}
