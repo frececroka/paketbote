@@ -13,13 +13,13 @@ use crate::web::routes::hash_password;
 #[derive(Serialize)]
 struct LoginContext {
     base: BaseContext,
-    error: Option<String>
+    msg: Option<String>
 }
 
-#[get("/login?<error>")]
-pub fn route_login(props: Props, error: Option<String>) -> Template {
+#[get("/login?<msg>")]
+pub fn route_login(props: Props, msg: Option<String>) -> Template {
     let base = BaseContext::new(&props.account);
-    let context = LoginContext { base, error };
+    let context = LoginContext { base, msg };
     Template::render("login", context)
 }
 
@@ -36,7 +36,7 @@ pub fn route_perform_login(props: Props, mut cookies: Cookies, body: Form<LoginD
         .map_err(|_| Status::InternalServerError)?;
     let account =
         if let Some(account) = account { account } else {
-            return Redirect::to("/login?error=wrong-username");
+            return Redirect::to("/login?msg=wrong-username");
         };
     let hashed_password = hash_password(&account.salt, &body.password);
     if hashed_password == account.hashed_password {
@@ -45,6 +45,6 @@ pub fn route_perform_login(props: Props, mut cookies: Cookies, body: Form<LoginD
         let target = format!("/{}", body.username);
         Redirect::to(target)
     } else {
-        Redirect::to("/login?error=wrong-password")
+        Redirect::to("/login?msg=wrong-password")
     }
 }

@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::db::models::Account;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct BaseContext {
     account: Option<String>
 }

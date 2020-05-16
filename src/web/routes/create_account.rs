@@ -3,16 +3,27 @@ use rocket::http::Status;
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
+use serde::Serialize;
 
 use crate::db::create_account;
 use crate::db::ExpectConflict;
 use crate::db::models::NewAccount;
+use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
-use crate::web::routes::{create_random_token, hash_password, no_context};
+use crate::web::props::Props;
+use crate::web::routes::{create_random_token, hash_password};
 
-#[get("/create-account")]
-pub fn route_create_account() -> Template {
-    Template::render("create-account", no_context())
+#[derive(Debug, Serialize)]
+struct CreateAccountContext {
+    base: BaseContext,
+    msg: Option<String>
+}
+
+#[get("/create-account?<msg>")]
+pub fn route_create_account(props: Props, msg: Option<String>) -> Template {
+    let base = BaseContext::new(&props.account);
+    let context = CreateAccountContext { base, msg };
+    Template::render("create-account", context)
 }
 
 #[derive(FromForm)]
@@ -32,7 +43,7 @@ pub fn route_perform_create_account(db: Db, body: Form<CreateAccount>) -> Redire
         .expect_conflict()
         .map_err(|_| Status::InternalServerError)?;
     Redirect::to(match account {
-        Some(_) => "/login?account-created",
-        None => "/create-account?username-taken"
+        Some(_) => "/login?msg=account-created",
+        None => "/create-account?msg=username-taken"
     })
 }

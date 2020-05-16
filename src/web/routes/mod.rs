@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 use fehler::throws;
 use log::warn;
@@ -21,10 +19,6 @@ pub mod getfile;
 pub mod remove;
 pub mod upload;
 pub mod search;
-
-fn no_context() -> HashMap<String, String> {
-    HashMap::new()
-}
 
 fn hash_password(salt: &str, password: &str) -> String {
     let mut hasher = Sha3_256::new();

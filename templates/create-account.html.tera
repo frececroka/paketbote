@@ -6,7 +6,15 @@
         <div class="col">
             <div class="form-group">
                 <label for="username">username</label>
-                <input id="username" name="username" type="text" class="form-control" />
+                {% if msg == "username-taken" %}
+                {% set classes = "is-invalid" %}
+                {% else %}
+                {% set classes = "" %}
+                {% endif %}
+                <input id="username" name="username" type="text" class="form-control {{classes}}" />
+                {% if msg == "username-taken" %}
+                <div class="invalid-feedback">this username is already taken</div>
+                {% endif %}
             </div>
         </div>
         <div class="col">

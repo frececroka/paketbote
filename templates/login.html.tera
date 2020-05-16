@@ -1,13 +1,21 @@
 {% extends "base" %}
 {% block content %}
 <h1>login</h1>
+{% if msg == "account-created" %}
+<div class="alert alert-success">your account was created</div>
+{% endif %}
 <form action="/login" method="post">
     <div class="row">
         <div class="col">
             <div class="form-group">
                 <label for="username">username</label>
-                <input id="username" name="username" type="text" class="form-control {% if error == "wrong-username" %} is-invalid {% endif %}" />
-                {% if error == "wrong-username" %}
+                {% if msg == "wrong-username" %}
+                {% set classes = "is-invalid" %}
+                {% else %}
+                {% set classes = "" %}
+                {% endif %}
+                <input id="username" name="username" type="text" class="form-control {{classes}}" />
+                {% if msg == "wrong-username" %}
                 <div class="invalid-feedback">unknown username</div>
                 {% endif %}
             </div>
@@ -15,8 +23,13 @@
         <div class="col">
             <div class="form-group">
                 <label for="password">password</label>
-                <input id="password" name="password" type="password" class="form-control {% if error == "wrong-password" %} is-invalid {% endif %}"/>
-                {% if error == "wrong-password" %}
+                {% if msg == "wrong-password" %}
+                {% set classes = "is-invalid" %}
+                {% else %}
+                {% set classes = "" %}
+                {% endif %}
+                <input id="password" name="password" type="password" class="form-control {{classes}}"/>
+                {% if msg == "wrong-password" %}
                 <div class="invalid-feedback">wrong password</div>
                 {% endif %}
             </div>
