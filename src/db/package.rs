@@ -6,6 +6,8 @@ use fehler::throws;
 
 use crate::db::delete_repo_action_by_package;
 use crate::db::models::{NewPackage, Package};
+use crate::db::package_depends::delete_package_depends;
+use crate::db::package_provides::delete_package_provides;
 
 use super::schema;
 
@@ -23,6 +25,12 @@ pub fn get_package(conn: &PgConnection, id: i32) -> Package {
     p::package
         .filter(p::id.eq(id))
         .first(conn)?
+}
+
+#[throws]
+pub fn get_packages(conn: &PgConnection) -> Vec<Package> {
+    use schema::package::dsl as p;
+    p::package.load(conn)?
 }
 
 #[throws]
@@ -59,6 +67,8 @@ pub fn get_packages_by_query(conn: &PgConnection, query: &str) -> Vec<Package> {
 pub fn remove_package(conn: &PgConnection, id: i32) {
     use schema::package::dsl as p;
     delete_repo_action_by_package(conn, id)?;
+    delete_package_depends(conn, id)?;
+    delete_package_provides(conn, id)?;
     diesel::delete(p::package)
         .filter(p::id.eq(id))
         .execute(conn)?;

@@ -1,27 +1,22 @@
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs::File;
-use std::io;
-use std::io::Read;
 use std::path::PathBuf;
 
 use fehler::throws;
-use libflate::gzip;
 use log::info;
 use multipart::server::{Multipart, MultipartData};
 use rocket::Data;
 use rocket::data::DataStream;
 use rocket::http::Status;
-use tar::Archive;
 use uuid::Uuid;
-use xz2::read::XzDecoder;
 
-use crate::db::{create_package, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
+use crate::db::{create_package, create_package_depends, create_package_provides, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::ExpectConflict;
-use crate::db::models::{Account, Compression, NewPackage, RepoActionOp};
+use crate::db::models::{Account, NewPackage, RepoActionOp};
 use crate::error::Error;
 use crate::parse_pkg_filename;
+use crate::pkginfo::load_pkginfo;
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
 use crate::web::routes::validate_access;
@@ -55,10 +50,17 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
     info!("The total size of uploaded files is {}.", total_size);
 
     info!("Loading PKGINFO from package...");
-    let pkginfo = load_pkginfo(compression, &package_file)?;
-    let pkgname = pkginfo.get("pkgname").ok_or(Status::BadRequest)?;
-    let pkgver = pkginfo.get("pkgver").ok_or(Status::BadRequest)?;
-    let arch = pkginfo.get("arch").ok_or(Status::BadRequest)?;
+    let pkginfo = load_pkginfo(compression, &package_file)
+        .map_err(|_| Status::InternalServerError)?;
+    let pkgname = pkginfo
+        .get("pkgname").ok_or(Status::BadRequest)?
+        .first().ok_or(Status::BadRequest)?;
+    let pkgver = pkginfo
+        .get("pkgver").ok_or(Status::BadRequest)?
+        .first().ok_or(Status::BadRequest)?;
+    let arch = pkginfo
+        .get("arch").ok_or(Status::BadRequest)?
+        .first().ok_or(Status::BadRequest)?;
     info!("Package has name {}, version {}, and is for architecture {}",
           pkgname, pkgver, arch);
 
@@ -78,6 +80,26 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
         .expect_conflict()
         .map_err(|_| Status::InternalServerError)?
         .ok_or(Status::Conflict)?;
+
+    let no_depends = vec![];
+    let depends = pkginfo.get("depend")
+        .unwrap_or(&no_depends);
+    for depends in depends {
+        create_package_depends(&*db, package.id, depends.clone())
+            .map_err(|_| Status::InternalServerError)?;
+    }
+
+    create_package_provides(&*db, package.id, package.name.clone())
+        .map_err(|_| Status::InternalServerError)?;
+
+    let no_provides = vec![];
+    let provides = pkginfo.get("provides")
+        .unwrap_or(&no_provides);
+    for provides in provides {
+        create_package_provides(&*db, package.id, provides.clone())
+            .map_err(|_| Status::InternalServerError)?;
+    }
+
     create_repo_action(&*db, package.id, RepoActionOp::Add)
         .map_err(|_| Status::InternalServerError)?;
 }
@@ -113,72 +135,4 @@ fn save_file(filename: &str, mut data: MultipartData<&mut Multipart<DataStream>>
         .size_limit(1024 * 1024 * 1024)
         .write_to(File::create(path)?)
         .into_result()?
-}
-
-#[throws(Status)]
-fn load_pkginfo(compression: Compression, package_file: &str) -> HashMap<String, String> {
-    let package_path = PathBuf::new()
-        .join("packages")
-        .join(package_file);
-    let compressed_reader = std::fs::File::open(package_path)
-        .map_err(|_| Status::InternalServerError)?;
-    let decompressed_reader = decompress(compression, compressed_reader)
-        .map_err(|_| Status::BadRequest)?;
-    extract_pkginfo(decompressed_reader)?
-}
-
-#[throws(io::Error)]
-fn decompress(compression: Compression, reader: impl Read + 'static) -> Box<dyn Read + 'static> {
-    use Compression::*;
-    match compression {
-        Lzma => Box::new(XzDecoder::new(reader)) as Box<dyn Read>,
-        Zstd => Box::new(zstd::Decoder::new(reader)?) as Box<dyn Read>,
-        Gzip => Box::new(gzip::Decoder::new(reader)?) as Box<dyn Read>
-    }
-}
-
-#[throws(Status)]
-fn extract_pkginfo(reader: impl Read) -> HashMap<String, String> {
-    let mut archive = Archive::new(reader);
-    let pkginfo_entry = archive.entries()
-        .map_err(|_| Status::InternalServerError)?
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| {
-            let path = entry.path().unwrap();
-            path.as_os_str() == ".PKGINFO"
-        })
-        .next().ok_or(Status::BadRequest)?;
-
-    let mut contents = String::new();
-    pkginfo_entry.take(100_000)
-        .read_to_string(&mut contents)
-        .map_err(|_| Status::BadRequest)?;
-
-    parse_pkginfo(contents)
-        .map_err(|_| Status::BadRequest)?
-}
-
-#[throws]
-fn parse_pkginfo(pkginfo: String) -> HashMap<String, String> {
-    pkginfo.lines()
-        .filter_map(|line| {
-            let line = line.trim();
-            if line.starts_with("#") {
-                None
-            } else {
-                let components: Vec<_> = line
-                    .splitn(2, "=")
-                    .collect();
-                if components.len() == 2 {
-                    Some(Ok((
-                        components[0].trim().to_string(),
-                        components[1].trim().to_string())))
-                } else {
-                    Some(Err(Error))
-                }
-            }
-        })
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .collect()
 }

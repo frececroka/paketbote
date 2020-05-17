@@ -4,6 +4,8 @@ use diesel::result::Error::DatabaseError;
 
 pub use account::*;
 pub use package::*;
+pub use package_depends::*;
+pub use package_provides::*;
 pub use repo::*;
 pub use repo_action::*;
 pub use token::*;
@@ -14,6 +16,8 @@ pub mod models;
 mod account;
 mod token;
 mod package;
+mod package_depends;
+mod package_provides;
 mod repo;
 mod repo_action;
 

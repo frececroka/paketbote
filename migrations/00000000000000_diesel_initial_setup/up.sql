@@ -39,6 +39,22 @@ Create Table package
     Unique (repo_id, name, version)
 );
 
+Create Table package_depends
+(
+    id         Serial Primary Key,
+    package_id Integer      Not Null References package,
+    depends    Varchar(255) Not Null,
+    Unique (package_id, depends)
+);
+
+Create Table package_provides
+(
+    id         Serial Primary Key,
+    package_id Integer      Not Null References package,
+    provides   Varchar(255) Not Null,
+    Unique (package_id, provides)
+);
+
 Create Table repo_action
 (
     id         Serial Primary Key,

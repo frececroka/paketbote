@@ -108,6 +108,34 @@ pub struct NewPackage {
     pub repo_id: i32
 }
 
+#[derive(Debug, Queryable)]
+pub struct PackageDepends {
+    pub id: i32,
+    pub package_id: i32,
+    pub depends: String
+}
+
+#[derive(Debug, Insertable)]
+#[table_name="package_depends"]
+pub struct NewPackageDepends {
+    pub package_id: i32,
+    pub depends: String
+}
+
+#[derive(Debug, Queryable)]
+pub struct PackageProvides {
+    pub id: i32,
+    pub package_id: i32,
+    pub provides: String
+}
+
+#[derive(Debug, Insertable)]
+#[table_name="package_provides"]
+pub struct NewPackageProvides {
+    pub package_id: i32,
+    pub provides: String
+}
+
 #[derive(Debug, Serialize, Queryable)]
 pub struct Repo {
     pub id: i32,

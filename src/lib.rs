@@ -16,6 +16,7 @@ use crate::error::Error;
 pub mod error;
 pub mod db;
 pub mod web;
+pub mod pkginfo;
 
 pub fn get_config() -> Config {
     Rocket::ignite().config().clone()

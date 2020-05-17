@@ -25,6 +25,22 @@ table! {
 }
 
 table! {
+    package_depends (id) {
+        id -> Int4,
+        package_id -> Int4,
+        depends -> Varchar,
+    }
+}
+
+table! {
+    package_provides (id) {
+        id -> Int4,
+        package_id -> Int4,
+        provides -> Varchar,
+    }
+}
+
+table! {
     repo (id) {
         id -> Int4,
         name -> Varchar,
@@ -51,6 +67,8 @@ table! {
 }
 
 joinable!(package -> repo (repo_id));
+joinable!(package_depends -> package (package_id));
+joinable!(package_provides -> package (package_id));
 joinable!(repo -> account (owner_id));
 joinable!(repo_action -> package (package_id));
 joinable!(token -> account (account_id));
@@ -58,6 +76,8 @@ joinable!(token -> account (account_id));
 allow_tables_to_appear_in_same_query!(
     account,
     package,
+    package_depends,
+    package_provides,
     repo,
     repo_action,
     token,
