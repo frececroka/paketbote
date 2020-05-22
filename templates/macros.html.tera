@@ -7,7 +7,7 @@
                 {% else %}
                     {% set disabled_class = "disabled" %}
                 {% endif %}
-                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page-1}}">Previous</a></li>
+                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page-1}}">&laquo;</a></li>
 
                 {% for page in pages %}
                     {% if current_page == page %}
@@ -23,7 +23,7 @@
                 {% else %}
                     {% set disabled_class = "disabled" %}
                 {% endif %}
-                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page+1}}">Next</a></li>
+                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page+1}}">&raquo;</a></li>
             </ul>
         </nav>
     {% endif %}
