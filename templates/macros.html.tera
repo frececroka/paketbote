@@ -1,0 +1,30 @@
+{% macro pagination(pages, current_page, total_pages) %}
+    {% if total_pages > 1 %}
+        <nav aria-label="pages">
+            <ul class="pagination">
+                {% if current_page > 0 %}
+                    {% set disabled_class = "" %}
+                {% else %}
+                    {% set disabled_class = "disabled" %}
+                {% endif %}
+                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page-1}}">Previous</a></li>
+
+                {% for page in pages %}
+                    {% if current_page == page %}
+                        {% set active_class = "active" %}
+                    {% else %}
+                        {% set active_class = "" %}
+                    {% endif %}
+                    <li class="page-item {{active_class}}"><a class="page-link" href="?p={{page}}">{{page+1}}</a></li>
+                {% endfor %}
+
+                {% if current_page + 1 < total_pages %}
+                    {% set disabled_class = "" %}
+                {% else %}
+                    {% set disabled_class = "disabled" %}
+                {% endif %}
+                <li class="page-item {{disabled_class}}"><a class="page-link" href="?p={{current_page+1}}">Next</a></li>
+            </ul>
+        </nav>
+    {% endif %}
+{% endmacro %}

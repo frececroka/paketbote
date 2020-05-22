@@ -4,7 +4,7 @@
 
 <ul class="list-group">
     {% for repo in repos %}
-        <li class="list-group-item"><a href="/{{account}}/{{repo.name}}">{{repo.name}}</a>, {{repo.packages}} packages, {{repo.byte_size | filesizeformat}}</li>
+        <li class="list-group-item"><a href="/{{account}}/{{repo.name}}">{{repo.name}}</a>, {{repo.package_count}} packages, {{repo.total_size | filesizeformat}}</li>
     {% endfor %}
     <li class="list-group-item">
         <form method="post" action="/{{account}}" class="form-inline">
