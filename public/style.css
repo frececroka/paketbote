@@ -66,3 +66,7 @@ table td {
 .text-center {
     text-align: center;
 }
+
+.pagination {
+    justify-content: center;
+}
