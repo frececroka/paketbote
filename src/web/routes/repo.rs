@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 use colored::*;
 use diesel::PgConnection;
 use fehler::throws;
@@ -47,7 +49,19 @@ struct RepoContext {
 impl RepoContext {
     fn new(props: &Props, account: Account, repo: Repo, packages: Paginated<Package>) -> RepoContext {
         let base = BaseContext::new(&props.account);
-        let pages = (0..packages.total_pages).collect();
+        let mut first_page = packages.current_page as isize - 3;
+        let mut last_page = packages.current_page as isize + 4;
+        if first_page < 0 {
+            last_page -= first_page;
+            first_page = 0;
+        }
+        if last_page > packages.total_pages as isize {
+            first_page -= last_page - packages.total_pages as isize;
+            last_page = packages.total_pages as isize;
+        }
+        first_page = max(first_page, 0);
+        last_page = min(last_page, packages.total_pages as isize);
+        let pages = (first_page as usize .. last_page as usize).collect();
         let can_edit = if let Some(active_account) = &props.account {
             active_account.name == account.name
         } else { false };
