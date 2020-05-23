@@ -1,12 +1,13 @@
 use chrono::{DateTime, Utc};
 use fehler::throws;
 use log::warn;
-use rocket::http::Status;
 use serde::Serialize;
 use sha3::{Digest, Sha3_256};
 
 use crate::{db, format_pkg_filename};
 use crate::db::models::Account;
+use crate::web::Error;
+use crate::web::Error::*;
 
 pub mod home;
 pub mod create_account;
@@ -64,14 +65,14 @@ impl From<db::models::Package> for Package {
     }
 }
 
-#[throws(Status)]
+#[throws]
 fn validate_access(active_account: Account, claimed_account: String) -> Account {
     if active_account.name == claimed_account {
         active_account
     } else {
         warn!("The principal {} does not match the account {} provided in the URL.",
             active_account.name, claimed_account);
-        Err(Status::Unauthorized)?
+        Err(Unauthorized)?
     }
 }
 

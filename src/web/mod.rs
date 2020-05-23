@@ -1,5 +1,12 @@
+use std::backtrace::Backtrace;
+use std::error::Error as StdError;
+
+use rocket::http::Status;
+use rocket::Request;
+use rocket::response::Responder;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
+use thiserror::Error;
 
 use db::Db;
 
@@ -23,6 +30,70 @@ fn catch_401_unauthorized() -> String {
 #[catch(409)]
 fn catch_409_conflict() -> String {
     "Cannot create resource because of a conflict.\n".into()
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Not found")]
+    NotFound,
+
+    #[error("Unauthorized")]
+    Unauthorized,
+
+    #[error("Conflict")]
+    Conflict,
+
+    #[error("BadRequest")]
+    BadRequest,
+
+    #[error("Internal server error: {0}")]
+    InternalServerError(#[from] Box<dyn std::error::Error + Send + Sync>, Backtrace)
+}
+
+macro_rules! web_error_from {
+    ($t: ty) => {
+        impl From<$t> for Error {
+            fn from(err: $t) -> Self {
+                let source = Box::new(err ) as Box<dyn std::error::Error + Send + Sync>;
+                let backtrace = Backtrace::capture();
+                Error::InternalServerError(source, backtrace)
+            }
+        }
+    }
+}
+
+web_error_from!(crate::error::Error);
+web_error_from!(std::io::Error);
+web_error_from!(diesel::result::Error);
+
+impl Into<Status> for Error {
+    fn into(self) -> Status {
+        use Error::*;
+        match self {
+            NotFound => Status::NotFound,
+            Conflict => Status::Conflict,
+            Unauthorized => Status::Unauthorized,
+            BadRequest => Status::BadRequest,
+            InternalServerError(_, _) => Status::InternalServerError,
+        }
+    }
+}
+
+impl<'r> Responder<'r> for Error {
+    fn respond_to(self, request: &Request) -> rocket::response::Result<'r> {
+        use Error::*;
+        match self {
+            InternalServerError(_, _) => {
+                println!("{}", self);
+                if let Some(backtrace) = self.backtrace() {
+                    println!("{}", backtrace);
+                }
+            }
+            _ => {}
+        }
+        let status: Status = self.into();
+        status.respond_to(request)
+    }
 }
 
 pub fn run() {

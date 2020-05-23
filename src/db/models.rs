@@ -45,7 +45,7 @@ impl FromStr for Compression {
             "xz" => Compression::Lzma,
             "gz" => Compression::Gzip,
             "zst" => Compression::Zstd,
-            _ => Err(Error)?
+            _ => Err(format!("Unknown compression format {}", string))?
         }
     }
 }
@@ -163,7 +163,7 @@ impl FromStr for RepoActionOp {
         match string {
             "add" => RepoActionOp::Add,
             "remove" => RepoActionOp::Remove,
-            _ => Err(Error)?
+            _ => Err(format!("Cannot interpret {} as RepoActionOp", string))?
         }
     }
 }

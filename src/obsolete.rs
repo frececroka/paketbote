@@ -34,7 +34,7 @@ fn sort_by_version(mut packages: Vec<&Package>) -> Vec<&Package> {
             package_vercmp(&p.version, &q.version)
                 .unwrap().reverse());
         packages
-    }).map_err(|_| Error)?
+    }).map_err(|_| "Sorting packages by version failed.")?
 }
 
 #[throws]
@@ -43,12 +43,10 @@ fn package_vercmp(v: &str, w: &str) -> Ordering {
         .arg(v).arg(w)
         .output()?;
     if !output.status.success() {
-        Err(Error)?
+        Err(format!("Invocation of vercmp failed with exit code {:?}.",
+            output.status.code()))?
     }
-    let result: i32 = String::from_utf8(output.stdout)
-        .map_err(|_| Error)?
-        .trim().parse()
-        .map_err(|_| Error)?;
+    let result: i32 = String::from_utf8(output.stdout)?.trim().parse()?;
     if result < 0 {
         Ordering::Less
     } else if result == 0 {

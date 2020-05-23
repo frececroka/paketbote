@@ -1,30 +1,31 @@
-use std::fmt::Formatter;
+use thiserror::Error;
 
-#[derive(Debug)]
-pub struct Error;
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Input/output error")]
+    Io(#[from] std::io::Error),
 
-impl std::error::Error for Error {}
+    #[error("Database error")]
+    Diesel(#[from] diesel::result::Error),
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, fmt: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(fmt, "generic error")
+    #[error("Encoding error")]
+    Utf8(#[from] std::string::FromUtf8Error),
+
+    #[error("Parse error")]
+    ParseInt(#[from] std::num::ParseIntError),
+
+    #[error("{0}")]
+    Generic(String)
+}
+
+impl From<&str> for Error {
+    fn from(message: &str) -> Self {
+        message.to_owned().into()
     }
 }
 
-impl From<diesel::result::Error> for Error {
-    fn from(_: diesel::result::Error) -> Self {
-        Error
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(_: std::io::Error) -> Self {
-        Error
-    }
-}
-
-impl From<std::string::FromUtf8Error> for Error {
-    fn from(_: std::string::FromUtf8Error) -> Self {
-        Error
+impl From<String> for Error {
+    fn from(message: String) -> Self {
+        Error::Generic(message)
     }
 }

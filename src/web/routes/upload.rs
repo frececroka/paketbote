@@ -1,42 +1,38 @@
 use std::borrow::Borrow;
 use std::convert::TryInto;
-use std::fs::File;
-use std::path::PathBuf;
 
 use fehler::throws;
 use log::info;
-use multipart::server::{Multipart, MultipartData};
+use multipart::server::Multipart;
 use rocket::Data;
-use rocket::data::DataStream;
-use rocket::http::Status;
 use uuid::Uuid;
 
 use crate::db::{create_package, create_package_depends, create_package_provides, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
 use crate::db::ExpectConflict;
 use crate::db::models::{Account, NewPackage, RepoActionOp};
-use crate::error::Error;
 use crate::parse_pkg_filename;
 use crate::pkginfo::load_pkginfo;
+use crate::save_archive;
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
+use crate::web::Error;
+use crate::web::Error::*;
 use crate::web::routes::validate_access;
 
-#[throws(Status)]
+#[throws]
 #[post("/<account>/<repo>/<package>", data = "<data>", rank = 5)]
 pub fn upload(db: Db, active_account: Account, account: String, repo: String, package: String, boundary: Boundary, data: Data) {
     let account = validate_access(active_account, account)?;
 
-    let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?;
+    let repo = get_repo_by_account_and_name(&*db, account.id, &repo)?
+        .ok_or(NotFound)?;
 
     let (name, version, arch, compression) = parse_pkg_filename(&package)
-        .map_err(|_| Status::BadRequest)?;
-    let existing_package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)
-        .map_err(|_| Status::InternalServerError)?;
+        .map_err(|_| BadRequest)?;
+    let existing_package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)?;
     if existing_package.is_some() {
         info!("Aborting upload early, because package already exists in this version.");
-        Err(Status::Conflict)?
+        Err(Conflict)?
     }
 
     info!("Saving uploaded files to disk...");
@@ -46,21 +42,20 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
           package_size, signature_size);
 
     let total_size: i32 = (package_size + signature_size)
-        .try_into().map_err(|_| Status::BadRequest)?;
+        .try_into().map_err(|_| BadRequest)?;
     info!("The total size of uploaded files is {}.", total_size);
 
     info!("Loading PKGINFO from package...");
-    let pkginfo = load_pkginfo(compression, &package_file)
-        .map_err(|_| Status::InternalServerError)?;
+    let pkginfo = load_pkginfo(compression, &package_file)?;
     let pkgname = pkginfo
-        .get("pkgname").ok_or(Status::BadRequest)?
-        .first().ok_or(Status::BadRequest)?;
+        .get("pkgname").ok_or(BadRequest)?
+        .first().ok_or(BadRequest)?;
     let pkgver = pkginfo
-        .get("pkgver").ok_or(Status::BadRequest)?
-        .first().ok_or(Status::BadRequest)?;
+        .get("pkgver").ok_or(BadRequest)?
+        .first().ok_or(BadRequest)?;
     let arch = pkginfo
-        .get("arch").ok_or(Status::BadRequest)?
-        .first().ok_or(Status::BadRequest)?;
+        .get("arch").ok_or(BadRequest)?
+        .first().ok_or(BadRequest)?;
     info!("Package has name {}, version {}, and is for architecture {}",
           pkgname, pkgver, arch);
 
@@ -77,34 +72,29 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
 
     info!("Adding package to database: {:?}", package);
     let package = create_package(&*db, &package)
-        .expect_conflict()
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::Conflict)?;
+        .expect_conflict()?
+        .ok_or(Conflict)?;
 
     let no_depends = vec![];
     let depends = pkginfo.get("depend")
         .unwrap_or(&no_depends);
     for depends in depends {
-        create_package_depends(&*db, package.id, depends.clone())
-            .map_err(|_| Status::InternalServerError)?;
+        create_package_depends(&*db, package.id, depends.clone())?;
     }
 
-    create_package_provides(&*db, package.id, package.name.clone())
-        .map_err(|_| Status::InternalServerError)?;
+    create_package_provides(&*db, package.id, package.name.clone())?;
 
     let no_provides = vec![];
     let provides = pkginfo.get("provides")
         .unwrap_or(&no_provides);
     for provides in provides {
-        create_package_provides(&*db, package.id, provides.clone())
-            .map_err(|_| Status::InternalServerError)?;
+        create_package_provides(&*db, package.id, provides.clone())?;
     }
 
-    create_repo_action(&*db, package.id, RepoActionOp::Add)
-        .map_err(|_| Status::InternalServerError)?;
+    create_repo_action(&*db, package.id, RepoActionOp::Add)?;
 }
 
-#[throws(Status)]
+#[throws]
 fn save_uploaded_files(data: Data, boundary: &str) -> ((String, u64), (String, u64)) {
     let mut package: Option<(String, u64)> = None;
     let mut signature: Option<(String, u64)> = None;
@@ -118,21 +108,10 @@ fn save_uploaded_files(data: Data, boundary: &str) -> ((String, u64), (String, u
             _ => return
         };
         let filename = Uuid::new_v4().to_string();
-        let filesize = save_file(&filename, entry.data)
+        let filesize = save_archive(&filename, entry.data)
             .expect("failed to save uploaded file");
         *target = Some((filename, filesize));
     }).unwrap();
 
-    (package.ok_or(Status::BadRequest)?, signature.ok_or(Status::BadRequest)?)
-}
-
-#[throws]
-fn save_file(filename: &str, mut data: MultipartData<&mut Multipart<DataStream>>) -> u64 {
-    let path = PathBuf::new()
-        .join("packages")
-        .join(filename);
-    data.save()
-        .size_limit(1024 * 1024 * 1024)
-        .write_to(File::create(path)?)
-        .into_result()?
+    (package.ok_or(BadRequest)?, signature.ok_or(BadRequest)?)
 }

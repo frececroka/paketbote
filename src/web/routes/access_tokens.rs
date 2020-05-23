@@ -1,5 +1,4 @@
 use fehler::throws;
-use rocket::http::Status;
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -8,6 +7,7 @@ use serde::Serialize;
 use crate::db::{create_token, delete_token_for_account, get_tokens_for_account};
 use crate::db::models::{Account, NewToken, Token};
 use crate::web::ctx_base::BaseContext;
+use crate::web::Error;
 use crate::web::props::Props;
 use crate::web::routes::create_random_token;
 
@@ -24,11 +24,10 @@ impl AccessTokensContext {
     }
 }
 
+#[throws]
 #[get("/access-tokens")]
-#[throws(Status)]
 pub fn route_access_tokens(props: Props, account: Account) -> Template {
-    let tokens = get_tokens_for_account(&*props.db, account.id)
-        .map_err(|_| Status::InternalServerError)?;
+    let tokens = get_tokens_for_account(&*props.db, account.id)?;
     let context = AccessTokensContext::new(&props, tokens);
     Template::render("access-tokens", context)
 }
@@ -51,24 +50,22 @@ impl AccessTokenCreatedContext {
     }
 }
 
+#[throws]
 #[post("/access-tokens", data = "<token>")]
-#[throws(Status)]
 pub fn route_access_tokens_create(props: Props, account: Account, token: Form<CreateAccessToken>) -> Template {
     let token = NewToken {
         name: token.name.clone(),
         the_token: create_random_token(),
         account_id: account.id
     };
-    create_token(&*props.db, &token)
-        .map_err(|_| Status::InternalServerError)?;
+    create_token(&*props.db, &token)?;
     let context = AccessTokenCreatedContext::new(&props, token);
     Template::render("access-token-created", context)
 }
 
+#[throws]
 #[delete("/access-tokens/<id>")]
-#[throws(Status)]
 pub fn route_access_tokens_delete(props: Props, account: Account, id: i32) -> Redirect {
-    delete_token_for_account(&*props.db, account.id, id)
-        .map_err(|_| Status::InternalServerError)?;
+    delete_token_for_account(&*props.db, account.id, id)?;
     Redirect::to("/access-tokens")
 }

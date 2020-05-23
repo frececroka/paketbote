@@ -5,7 +5,6 @@ use diesel::PgConnection;
 use fehler::throws;
 use prettytable::{Cell, Row, Table};
 use prettytable::format::consts::FORMAT_CLEAN;
-use rocket::http::Status;
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -17,10 +16,12 @@ use crate::db::models::{Account, NewRepo, Repo, RepoActionOp};
 use crate::obsolete::determine_obsolete;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
+use crate::web::Error;
+use crate::web::Error::*;
 use crate::web::props::Props;
 use crate::web::routes::{Package, validate_access};
 
-#[throws(Status)]
+#[throws]
 #[get("/<account>/<repo>", format = "text/plain", rank = 5)]
 pub fn route_repo_text(db: Db, account: String, repo: String) -> String {
     let (_, _, packages) = get_packages(&*db, &account, &repo, 0)?;
@@ -69,7 +70,7 @@ impl RepoContext {
     }
 }
 
-#[throws(Status)]
+#[throws]
 #[get("/<account>/<repo>?<p>", format = "text/html", rank = 4)]
 pub fn route_repo_html(props: Props, account: String, repo: String, p: Option<usize>) -> Template {
     let (account, repo, packages) = get_packages(&*props.db, &account, &repo, p.unwrap_or(0))?;
@@ -77,12 +78,11 @@ pub fn route_repo_html(props: Props, account: String, repo: String, p: Option<us
     Template::render("repo", context)
 }
 
-#[throws(Status)]
+#[throws]
 fn get_packages(db: &PgConnection, account: &str, repo: &str, page: usize) -> (Account, Repo, Paginated<Package>) {
     let account = load_account(db, account)?;
-    let repo = load_repo(db, repo, &account)?;
-    let mut packages = get_packages_by_repo(db, repo.id, page)
-        .map_err(|_| Status::InternalServerError)?;
+    let repo = load_repo(db, account.id, repo)?;
+    let mut packages = get_packages_by_repo(db, repo.id, page)?;
     packages.items.sort_by_key(|p| p.name.clone());
     let packages = packages.map(|p| p.into());
     (account, repo, packages)
@@ -93,7 +93,7 @@ pub struct CreateRepo {
     name: String
 }
 
-#[throws(Status)]
+#[throws]
 #[post("/<account>", data = "<data>")]
 pub fn route_repo_create(
     db: Db,
@@ -105,49 +105,42 @@ pub fn route_repo_create(
     let account = validate_access(active_account, account)?;
 
     if data.name.len() == 0 {
-        Err(Status::BadRequest)?
+        Err(BadRequest)?
     }
 
     let repo = NewRepo { name: data.name.clone(), owner_id: account.id };
     let repo = create_repo(&*db, &repo)
-        .expect_conflict()
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::Conflict)?;
+        .expect_conflict()?
+        .ok_or(Conflict)?;
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))
 }
 
-#[throws(Status)]
+#[throws]
 #[post("/<account>/<repo>/delete-obsolete", rank = 4)]
 pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Redirect {
     let account = load_account(&*props.db, &account)?;
-    let repo = load_repo(&*props.db, &repo, &account)?;
-    let packages = get_all_packages_by_repo(&*props.db, repo.id)
-        .map_err(|_| Status::InternalServerError)?;
+    let repo = load_repo(&*props.db, account.id, &repo)?;
+    let packages = get_all_packages_by_repo(&*props.db, repo.id)?;
     let packages: Vec<&crate::db::models::Package> = packages.iter().collect();
-    let obsoletes = determine_obsolete(packages)
-        .map_err(|_| Status::InternalServerError)?;
+    let obsoletes = determine_obsolete(packages)?;
 
     for obsolete in obsoletes {
-        set_package_deleted(&*props.db, obsolete.id, true)
-            .map_err(|_| Status::InternalServerError)?;
-        create_repo_action(&*props.db, obsolete.id, RepoActionOp::Remove)
-            .map_err(|_| Status::InternalServerError)?;
+        set_package_deleted(&*props.db, obsolete.id, true)?;
+        create_repo_action(&*props.db, obsolete.id, RepoActionOp::Remove)?;
     }
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))
 }
 
-#[throws(Status)]
+#[throws]
 fn load_account(db: &PgConnection, account: &str) -> Account {
-    get_account_by_name(db, account)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?
+    get_account_by_name(db, account)?
+        .ok_or(NotFound)?
 }
 
-#[throws(Status)]
-fn load_repo(db: &PgConnection, repo: &str, account: &Account) -> Repo {
-    get_repo_by_account_and_name(db, account.id, repo)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?
+#[throws]
+fn load_repo(db: &PgConnection, account_id: i32, repo: &str) -> Repo {
+    get_repo_by_account_and_name(db, account_id, repo)?
+        .ok_or(NotFound)?
 }

@@ -1,5 +1,4 @@
 use fehler::throws;
-use rocket::http::Status;
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -10,6 +9,7 @@ use crate::db::ExpectConflict;
 use crate::db::models::NewAccount;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
+use crate::web::Error;
 use crate::web::props::Props;
 use crate::web::routes::{create_random_token, hash_password};
 
@@ -32,7 +32,7 @@ pub struct CreateAccount {
     password: String,
 }
 
-#[throws(Status)]
+#[throws]
 #[post("/create-account", data = "<body>")]
 pub fn route_perform_create_account(db: Db, body: Form<CreateAccount>) -> Redirect {
     let name = body.username.to_string();
@@ -40,8 +40,7 @@ pub fn route_perform_create_account(db: Db, body: Form<CreateAccount>) -> Redire
     let password = hash_password(&salt, &body.password);
     let account = NewAccount { name, salt, hashed_password: password };
     let account = create_account(&*db, &account)
-        .expect_conflict()
-        .map_err(|_| Status::InternalServerError)?;
+        .expect_conflict()?;
     Redirect::to(match account {
         Some(_) => "/login?msg=account-created",
         None => "/create-account?msg=username-taken"

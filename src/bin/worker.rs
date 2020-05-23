@@ -67,7 +67,10 @@ fn perform_repo_add(conn: &PgConnection, package: &Package) {
         .arg("database.db.tar.gz")
         .arg(package_file)
         .output()?;
-    if !output.status.success() { Err(Error)? }
+    if !output.status.success() {
+        Err(format!("Invocation of repo-add failed with exit code {:?}",
+            output.status.code()))?
+    }
 
     update_source_db(&source_db)?;
     set_package_active(conn, package.id)?;
@@ -84,7 +87,10 @@ fn perform_repo_rm(conn: &PgConnection, package: &Package) {
             .arg("database.db.tar.gz")
             .arg(&package.name)
             .output()?;
-        if !output.status.success() { Err(Error)? }
+        if !output.status.success() {
+            Err(format!("Invocation of repo-remove failed with exit code {:?}",
+                output.status.code()))?
+        }
     }
 
     remove_package(conn, package.id)?;

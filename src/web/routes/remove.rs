@@ -1,14 +1,15 @@
 use fehler::throws;
-use rocket::http::Status;
 use rocket::response::Redirect;
 
 use crate::db::{create_repo_action, get_package_by_repo, get_repo_by_account_and_name, set_package_deleted};
 use crate::db::models::{Account, RepoActionOp};
 use crate::parse_pkg_filename;
 use crate::web::db::Db;
+use crate::web::Error;
+use crate::web::Error::*;
 use crate::web::routes::validate_access;
 
-#[throws(Status)]
+#[throws]
 #[delete("/<account>/<repo>/<package>")]
 pub fn route_remove(
     db: Db,
@@ -20,20 +21,16 @@ pub fn route_remove(
 {
     let account = validate_access(active_account, account)?;
 
-    let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?;
+    let repo = get_repo_by_account_and_name(&*db, account.id, &repo)?
+        .ok_or(NotFound)?;
 
     let (name, version, arch, _) = parse_pkg_filename(&package)
-        .map_err(|_| Status::BadRequest)?;
-    let package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)
-        .map_err(|_| Status::InternalServerError)?
-        .ok_or(Status::NotFound)?;
+        .map_err(|_| BadRequest)?;
+    let package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)?
+        .ok_or(NotFound)?;
 
-    set_package_deleted(&*db, package.id, true)
-        .map_err(|_| Status::InternalServerError)?;
-    create_repo_action(&*db, package.id, RepoActionOp::Remove)
-        .map_err(|_| Status::InternalServerError)?;
+    set_package_deleted(&*db, package.id, true)?;
+    create_repo_action(&*db, package.id, RepoActionOp::Remove)?;
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))
 }

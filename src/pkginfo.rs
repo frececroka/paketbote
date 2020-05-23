@@ -16,10 +16,8 @@ pub fn load_pkginfo(compression: Compression, package_file: &str) -> HashMap<Str
     let package_path = PathBuf::new()
         .join("packages")
         .join(package_file);
-    let compressed_reader = std::fs::File::open(package_path)
-        .map_err(|_| Error)?;
-    let decompressed_reader = decompress(compression, compressed_reader)
-        .map_err(|_| Error)?;
+    let compressed_reader = std::fs::File::open(package_path)?;
+    let decompressed_reader = decompress(compression, compressed_reader)?;
     extract_pkginfo(decompressed_reader)?
 }
 
@@ -36,23 +34,20 @@ fn decompress(compression: Compression, reader: impl Read + 'static) -> Box<dyn 
 #[throws]
 fn extract_pkginfo(reader: impl Read) -> HashMap<String, Vec<String>> {
     let mut archive = Archive::new(reader);
-    let pkginfo_entry = archive.entries()
-        .map_err(|_| Error)?
+    let pkginfo_entry = archive.entries()?
         .filter_map(|entry| entry.ok())
         .filter(|entry| {
             let path = entry.path().unwrap();
             path.as_os_str() == ".PKGINFO"
         })
         .next()
-        .ok_or(Error)?;
+        .ok_or("Archive does not contain a .PKGINFO file")?;
 
     let mut contents = String::new();
     pkginfo_entry.take(100_000)
-        .read_to_string(&mut contents)
-        .map_err(|_| Error)?;
+        .read_to_string(&mut contents)?;
 
-    parse_pkginfo(contents)
-        .map_err(|_| Error)?
+    parse_pkginfo(contents)?
 }
 
 #[throws]
@@ -71,7 +66,7 @@ fn parse_pkginfo(pkginfo: String) -> HashMap<String, Vec<String>> {
                         components[0].trim().to_string(),
                         components[1].trim().to_string())))
                 } else {
-                    Some(Err(Error))
+                    Some(Err(format!("Cannot parse line of package info: {}", line)))
                 }
             }
         })

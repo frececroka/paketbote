@@ -1,11 +1,11 @@
 use fehler::throws;
-use rocket::http::Status;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::db::{get_account, get_packages_by_query, get_repo};
 use crate::db::models::{Account, Repo};
 use crate::web::ctx_base::BaseContext;
+use crate::web::Error;
 use crate::web::props::Props;
 use crate::web::routes::Package;
 
@@ -35,11 +35,10 @@ struct PackageRepoAccount {
     account: Account
 }
 
+#[throws]
 #[get("/search?<query>")]
-#[throws(Status)]
 pub fn route_search_results(props: Props, query: String) -> Template {
-    let results = get_packages_by_query(&props.db, &query)
-        .map_err(|_| Status::InternalServerError)?
+    let results = get_packages_by_query(&props.db, &query)?
         .into_iter()
         .map(|package| {
             let package: Package = package.into();
@@ -47,8 +46,7 @@ pub fn route_search_results(props: Props, query: String) -> Template {
             let account = get_account(&props.db, repo.owner_id)?;
             Ok(PackageRepoAccount { package, repo, account })
         })
-        .collect::<Result<Vec<_>, diesel::result::Error>>()
-        .map_err(|_| Status::InternalServerError)?;
+        .collect::<Result<Vec<_>, diesel::result::Error>>()?;
     let base = BaseContext::new(&props.account);
     let context = SearchResultsContext { base, query, results };
     Template::render("search-results", context)

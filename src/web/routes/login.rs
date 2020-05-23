@@ -1,5 +1,5 @@
 use fehler::throws;
-use rocket::http::{Cookie, Cookies, Status};
+use rocket::http::{Cookie, Cookies};
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
@@ -7,6 +7,7 @@ use serde::Serialize;
 
 use crate::db::get_account_by_name;
 use crate::web::ctx_base::BaseContext;
+use crate::web::Error;
 use crate::web::props::Props;
 use crate::web::routes::hash_password;
 
@@ -29,11 +30,10 @@ pub struct LoginData {
     password: String,
 }
 
-#[throws(Status)]
+#[throws]
 #[post("/login", data = "<body>")]
 pub fn route_perform_login(props: Props, mut cookies: Cookies, body: Form<LoginData>) -> Redirect {
-    let account = get_account_by_name(&*props.db, &body.username)
-        .map_err(|_| Status::InternalServerError)?;
+    let account = get_account_by_name(&*props.db, &body.username)?;
     let account =
         if let Some(account) = account { account } else {
             return Redirect::to("/login?msg=wrong-username");
