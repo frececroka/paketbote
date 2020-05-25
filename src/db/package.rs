@@ -99,6 +99,7 @@ pub fn get_packages_by_query(conn: &PgConnection, query: &str) -> Vec<Package> {
     p::package
         .filter(p::name.like(&format!("%{}%", query)))
         .filter(p::deleted.eq(false))
+        .filter(p::active.eq(true))
         .load(conn)?
 }
 
