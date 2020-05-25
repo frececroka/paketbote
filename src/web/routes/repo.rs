@@ -1,25 +1,39 @@
-use std::cmp::{max, min};
+use std::cmp::max;
+use std::cmp::min;
 
 use colored::*;
 use diesel::PgConnection;
 use fehler::throws;
-use prettytable::{Cell, Row, Table};
+use prettytable::Cell;
 use prettytable::format::consts::FORMAT_CLEAN;
+use prettytable::Row;
+use prettytable::Table;
 use rocket::request::Form;
 use rocket::response::Redirect;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{create_repo, create_repo_action, get_account_by_name, get_all_packages_by_repo, get_packages_by_repo, get_repo_by_account_and_name, Paginated, set_package_deleted};
+use crate::db::create_repo;
+use crate::db::create_repo_action;
 use crate::db::ExpectConflict;
-use crate::db::models::{Account, NewRepo, Repo, RepoActionOp};
+use crate::db::get_account_by_name;
+use crate::db::get_all_packages_by_repo;
+use crate::db::get_packages_by_repo;
+use crate::db::get_repo_by_account_and_name;
+use crate::db::models::Account;
+use crate::db::models::NewRepo;
+use crate::db::models::Repo;
+use crate::db::models::RepoActionOp;
+use crate::db::Paginated;
+use crate::db::set_package_deleted;
 use crate::obsolete::determine_obsolete;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::Error;
 use crate::web::Error::*;
 use crate::web::props::Props;
-use crate::web::routes::{Package, validate_access};
+use crate::web::routes::Package;
+use crate::web::routes::validate_access;
 
 #[throws]
 #[get("/<account>/<repo>", format = "text/plain", rank = 5)]
@@ -122,8 +136,7 @@ pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Red
     let account = load_account(&*props.db, &account)?;
     let repo = load_repo(&*props.db, account.id, &repo)?;
     let packages = get_all_packages_by_repo(&*props.db, repo.id)?;
-    let packages: Vec<&crate::db::models::Package> = packages.iter().collect();
-    let obsoletes = determine_obsolete(packages)?;
+    let obsoletes = determine_obsolete(packages.iter().collect());
 
     for obsolete in obsoletes {
         set_package_deleted(&*props.db, obsolete.id, true)?;
