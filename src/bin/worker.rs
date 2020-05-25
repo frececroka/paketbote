@@ -1,46 +1,61 @@
+#![feature(never_type)]
+
 use std::env::set_current_dir;
-use std::fs::{copy, File, remove_file, rename};
+use std::fs::copy;
+use std::fs::File;
+use std::fs::remove_file;
+use std::fs::rename;
 use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-use diesel::{Connection, PgConnection};
+use diesel::Connection;
+use diesel::PgConnection;
 use fehler::throws;
 use libflate::gzip;
 use tar::Archive;
 
-use pacman::{format_pkg_filename, get_config, parse_pkg_name};
-use pacman::db::{delete_repo_action, get_package, get_repo_action, remove_package, set_package_active};
+use anyhow::anyhow;
+use anyhow::Context;
+use anyhow::Error;
+use pacman::db::delete_repo_action;
+use pacman::db::get_package;
+use pacman::db::get_repo_action;
 use pacman::db::models::{Package, RepoActionOp};
-use pacman::error::Error;
+use pacman::db::remove_package;
+use pacman::db::set_package_active;
+use pacman::format_pkg_filename;
+use pacman::get_config;
+use pacman::parse_pkg_name;
 
-fn main() {
+fn main() -> Result<!, Error> {
     let config = get_config();
     let database = config
         .get_table("databases").unwrap()
         .get("main").unwrap()
         .get("url").unwrap()
         .as_str().unwrap();
-    let conn = &PgConnection::establish(database).unwrap();
+    let conn = &PgConnection::establish(database)?;
 
-    set_current_dir("worker").unwrap();
+    set_current_dir("worker")
+        .with_context(|| "Failed to switch to 'worker' directory")?;
 
     loop {
-        if let Some(repo_action) = get_repo_action(conn).unwrap() {
-            let package = get_package(conn, repo_action.package_id).unwrap();
+        if let Some(repo_action) = get_repo_action(conn)? {
+            let package = get_package(conn, repo_action.package_id)?;
             match repo_action.action {
                 RepoActionOp::Add => {
                     println!("Adding {:?}", package);
-                    perform_repo_add(conn, &package).unwrap();
+                    perform_repo_add(conn, &package)?;
                 }
                 RepoActionOp::Remove => {
                     println!("Removing {:?}", package);
-                    perform_repo_rm(conn, &package).unwrap();
+                    perform_repo_rm(conn, &package)?;
                 }
             };
-            delete_repo_action(conn, repo_action.id).unwrap();
+            delete_repo_action(conn, repo_action.id)?;
         } else {
             thread::sleep(Duration::from_secs(10));
         }
@@ -68,7 +83,7 @@ fn perform_repo_add(conn: &PgConnection, package: &Package) {
         .arg(package_file)
         .output()?;
     if !output.status.success() {
-        Err(format!("Invocation of repo-add failed with exit code {:?}",
+        Err(anyhow!("Invocation of repo-add failed with exit code {:?}",
             output.status.code()))?
     }
 
@@ -88,7 +103,7 @@ fn perform_repo_rm(conn: &PgConnection, package: &Package) {
             .arg(&package.name)
             .output()?;
         if !output.status.success() {
-            Err(format!("Invocation of repo-remove failed with exit code {:?}",
+            Err(anyhow!("Invocation of repo-remove failed with exit code {:?}",
                 output.status.code()))?
         }
     }

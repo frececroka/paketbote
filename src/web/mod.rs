@@ -54,7 +54,7 @@ macro_rules! web_error_from {
     ($t: ty) => {
         impl From<$t> for Error {
             fn from(err: $t) -> Self {
-                let source = Box::new(err ) as Box<dyn std::error::Error + Send + Sync>;
+                let source = Box::new(err) as Box<dyn std::error::Error + Send + Sync>;
                 let backtrace = Backtrace::capture();
                 Error::InternalServerError(source, backtrace)
             }
