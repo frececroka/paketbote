@@ -1,60 +1,99 @@
-use std::cmp::Ordering;
-use std::panic;
-use std::process::Command;
-
-use fehler::throws;
+use alpm::vercmp;
 use itertools::Itertools;
 
 use crate::db::models::Package;
-use crate::error::Error;
 
-#[throws]
 pub fn determine_obsolete(mut packages: Vec<&Package>) -> Vec<&Package> {
     packages.sort_by_key(|p| p.name.clone());
     packages.into_iter()
         .group_by(|p| p.name.clone()).into_iter()
         .map(|(_, g)| determine_obsolete_single(g.collect()))
-        .collect::<Result<Vec<Vec<&Package>>, _>>()?
+        .collect::<Vec<Vec<&Package>>>()
         .into_iter().flatten().collect()
 }
 
-#[throws]
-fn determine_obsolete_single(packages: Vec<&Package>) -> Vec<&Package> {
-    let packages = sort_by_version(packages)?;
+fn determine_obsolete_single(mut packages: Vec<&Package>) -> Vec<&Package> {
+    sort_by_version(&mut packages);
     packages.into_iter()
+        .rev()
         .skip_while(|p| !p.active)
         .skip(1)
         .collect()
 }
 
-#[throws]
-fn sort_by_version(mut packages: Vec<&Package>) -> Vec<&Package> {
-    panic::catch_unwind(move || {
-        packages.sort_by(|p, q|
-            package_vercmp(&p.version, &q.version)
-                .unwrap().reverse());
-        packages
-    }).map_err(|_| "Sorting packages by version failed.")?
+fn sort_by_version(packages: &mut [&Package]) {
+    packages.sort_by(|p, q| vercmp(&p.version, &q.version));
 }
 
-#[throws]
-fn package_vercmp(v: &str, w: &str) -> Ordering {
-    let output = Command::new("vercmp")
-        .arg(v).arg(w)
-        .output()?;
-    if !output.status.success() {
-        Err(format!("Invocation of vercmp failed with exit code {:?}.",
-            output.status.code()))?
+#[cfg(test)]
+mod test {
+    use chrono::NaiveDate;
+
+    use crate::db::models::{Compression, Package};
+    use crate::obsolete::determine_obsolete_single;
+    use itertools::Itertools;
+
+    #[test]
+    fn test_determine_obsolete_single_no_packages() {
+        let obsolete = determine_obsolete_single(vec![]);
+        assert!(obsolete.is_empty());
     }
-    let result: i32 = String::from_utf8(output.stdout)?.trim().parse()?;
-    if result < 0 {
-        Ordering::Less
-    } else if result == 0 {
-        Ordering::Equal
-    } else if result > 0 {
-        Ordering::Greater
-    } else {
-        unreachable!()
+
+    #[test]
+    fn test_determine_obsolete_single_only_newer_packages() {
+        let packages = vec![
+            make_package(0, "2.3-5", false),
+            make_package(1, "2.4-1", false),
+            make_package(2, "2.3-4", true),
+            make_package(3, "2.4-2", false),
+        ];
+        let obsolete = determine_obsolete_single(packages.iter().collect());
+        assert!(obsolete.is_empty());
+    }
+
+    #[test]
+    fn test_determine_obsolete_single_only_older_packages() {
+        let packages = vec![
+            make_package(0, "1.3-1", false),
+            make_package(1, "2.3-3", false),
+            make_package(2, "2.3-4", true),
+            make_package(3, "2.2-2", false),
+        ];
+        let obsolete = determine_obsolete_single(packages.iter().collect());
+        assert_eq!(get_ids(&obsolete), vec![0, 1, 3]);
+    }
+
+    #[test]
+    fn test_determine_obsolete_single_some_newer_some_older_packages() {
+        let packages = vec![
+            make_package(0, "1.3-1", false),
+            make_package(1, "2.3-3", false),
+            make_package(2, "2.3-5", false),
+            make_package(3, "2.3-4", true),
+            make_package(4, "2.4-1", false),
+            make_package(5, "2.2-2", false),
+            make_package(6, "2.4-2", false),
+        ];
+        let obsolete = determine_obsolete_single(packages.iter().collect());
+        assert_eq!(get_ids(&obsolete), vec![0, 1, 5]);
+    }
+
+    fn make_package(id: i32, version: &str, active: bool) -> Package {
+        let name = String::new();
+        let version = version.to_owned();
+        let arch = String::new();
+        let size = 0;
+        let archive = String::new();
+        let signature = String::new();
+        let compression = Compression::Zstd;
+        let created = NaiveDate::from_ymd(2016, 7, 8)
+            .and_hms(9, 10, 11);
+        let deleted = false;
+        let repo_id = 0;
+        Package { id, name, version, arch, size, archive, signature, compression, created, active, deleted, repo_id }
+    }
+
+    fn get_ids(packages: &[&Package]) -> Vec<i32> {
+        packages.iter().map(|p| p.id).sorted().collect()
     }
 }
-

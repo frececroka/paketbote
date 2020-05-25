@@ -16,6 +16,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "alpm"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bb74d01ed86932b1f061d32715faec77104239140557cc6e4f7ce5da9bcfafd"
+dependencies = [
+ "alpm-sys-fork",
+ "bitflags",
+]
+
+[[package]]
+name = "alpm-sys-fork"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec7b55dfea0a6b63c8c465d15650ea50be7a85d70d22d95b8798e71114c40310"
+
+[[package]]
 name = "anyhow"
 version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -949,6 +965,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 name = "pacman"
 version = "0.1.0"
 dependencies = [
+ "alpm",
  "anyhow",
  "base64 0.12.0",
  "chrono",
