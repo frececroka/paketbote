@@ -1,0 +1,5 @@
+:root {
+    --background: var(--dark);
+    --foreground: var(--light);
+    --link-fg: var(--teal);
+}

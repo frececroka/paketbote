@@ -16,10 +16,8 @@ use serde::Serialize;
 use crate::db::create_repo;
 use crate::db::create_repo_action;
 use crate::db::ExpectConflict;
-use crate::db::get_account_by_name;
 use crate::db::get_all_packages_by_repo;
 use crate::db::get_packages_by_repo;
-use crate::db::get_repo_by_account_and_name;
 use crate::db::models::Account;
 use crate::db::models::NewRepo;
 use crate::db::models::Repo;
@@ -31,8 +29,10 @@ use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::Error;
 use crate::web::Error::*;
+use crate::web::models::Package;
 use crate::web::props::Props;
-use crate::web::routes::Package;
+use crate::web::routes::load_account;
+use crate::web::routes::load_repo;
 use crate::web::routes::validate_access;
 
 #[throws]
@@ -144,16 +144,4 @@ pub fn route_delete_obsolete(props: Props, account: String, repo: String) -> Red
     }
 
     Redirect::to(format!("/{}/{}", account.name, repo.name))
-}
-
-#[throws]
-fn load_account(db: &PgConnection, account: &str) -> Account {
-    get_account_by_name(db, account)?
-        .ok_or(NotFound)?
-}
-
-#[throws]
-fn load_repo(db: &PgConnection, account_id: i32, repo: &str) -> Repo {
-    get_repo_by_account_and_name(db, account_id, repo)?
-        .ok_or(NotFound)?
 }

@@ -30,7 +30,7 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
 
 {{ macros::pagination(pages=pages, current_page=packages.current_page, total_pages=packages.total_pages) }}
 
-<div class="table-responsive">
+<span class="table-responsive">
     <table class="packages table table-sm">
         <thead>
         <tr>
@@ -54,12 +54,17 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
             <td>{{package.arch}}</td>
             <td>{{package.created}}</td>
             {% if can_edit %}
-            <td class="text-center">
+            <td class="package-actions">
                 <form method="post" action="/{{account.name}}/{{repo.name}}/{{package.archive}}">
                     <input type="hidden" name="_method" value="delete" />
-                    <div class="react-delete-button">
-                        <button class="bt-link">[delete]</button>
-                    </div>
+                    <span class="react-delete-button">
+                        <button class="bt-link" title="delete"><span class="icon-trash"></span></button>
+                    </span>
+                </form>
+                <form method="post" action="/{{account.name}}/{{repo.name}}/{{package.archive}}/activate">
+                    <span class="react-delete-button">
+                        <button class="bt-link" title="activate"><span class="icon-dot-circled"></span></button>
+                    </span>
                 </form>
             </td>
             {% endif %}

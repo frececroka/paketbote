@@ -1,11 +1,16 @@
-use chrono::{DateTime, Utc};
+use diesel::PgConnection;
 use fehler::throws;
 use log::warn;
-use serde::Serialize;
-use sha3::{Digest, Sha3_256};
+use sha3::Digest;
+use sha3::Sha3_256;
 
-use crate::{db, format_pkg_filename};
+use crate::db::get_account_by_name;
+use crate::db::get_package_by_repo;
+use crate::db::get_repo_by_account_and_name;
 use crate::db::models::Account;
+use crate::db::models::Package;
+use crate::db::models::Repo;
+use crate::parse_pkg_filename;
 use crate::web::Error;
 use crate::web::Error::*;
 
@@ -16,7 +21,7 @@ pub mod logout;
 pub mod account;
 pub mod access_tokens;
 pub mod repo;
-pub mod getfile;
+pub mod package;
 pub mod remove;
 pub mod upload;
 pub mod search;
@@ -28,43 +33,6 @@ fn hash_password(salt: &str, password: &str) -> String {
     base64::encode(hasher.result())
 }
 
-#[derive(Debug, Serialize)]
-struct Package {
-    pub id: i32,
-    pub name: String,
-    pub version: String,
-    pub arch: String,
-    pub size: i32,
-    pub archive: String,
-    pub signature: String,
-    pub created: String,
-    pub active: bool,
-    pub repo_id: i32
-}
-
-impl From<db::models::Package> for Package {
-    fn from(package: db::models::Package) -> Self {
-        let created = DateTime::<Utc>::from_utc(package.created, Utc);
-        let created_fmt = created
-            .format("%Y-%m-%d")
-            .to_string();
-        let archive_file = format_pkg_filename(&package);
-        let signature_file = format!("{}.sig", archive_file);
-        Package {
-            id: package.id,
-            name: package.name,
-            version: package.version,
-            arch: package.arch,
-            size: package.size,
-            archive: archive_file,
-            signature: signature_file,
-            created: created_fmt,
-            active: package.active,
-            repo_id: package.repo_id,
-        }
-    }
-}
-
 #[throws]
 fn validate_access(active_account: Account, claimed_account: String) -> Account {
     if active_account.name == claimed_account {
@@ -74,6 +42,26 @@ fn validate_access(active_account: Account, claimed_account: String) -> Account 
             active_account.name, claimed_account);
         Err(Unauthorized)?
     }
+}
+
+#[throws]
+fn load_account(db: &PgConnection, account: &str) -> Account {
+    get_account_by_name(db, account)?
+        .ok_or(NotFound)?
+}
+
+#[throws]
+fn load_repo(db: &PgConnection, account_id: i32, repo: &str) -> Repo {
+    get_repo_by_account_and_name(db, account_id, repo)?
+        .ok_or(NotFound)?
+}
+
+#[throws]
+fn load_package(conn: &PgConnection, repo_id: i32, package: &str) -> Package {
+    let (name, version, arch, _) = parse_pkg_filename(package)
+        .map_err(|_| NotFound)?;
+    get_package_by_repo(conn, repo_id, &name, &version, &arch)?
+        .ok_or(NotFound)?
 }
 
 fn create_random_token() -> String {

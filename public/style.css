@@ -1,3 +1,4 @@
+@import "icons.css";
 .container {
     margin-top: 1em;
 }
@@ -69,4 +70,12 @@ table td {
 
 .pagination {
     justify-content: center;
+}
+
+.package-actions {
+    white-space: nowrap;
+}
+
+.package-actions form {
+    display: inline;
 }

@@ -9,21 +9,16 @@
 
         render() {
             let cssClass = "";
-            let text = this.props.text;
             if (this.state.clicked) {
                 cssClass = "delete-confirm";
-                text = "[sure?]";
             }
-            let style = {};
-            if (this.state.minWidth) {
-                style["minWidth"] = this.state.minWidth;
-            }
-            let props = {
+            return e("button", {
                 className: "bt-link " + cssClass,
                 onClick: (ev) => this.onClick(ev),
-                style
-            };
-            return e("button", props, text);
+                dangerouslySetInnerHTML: {
+                    __html: this.props.content
+                }
+            });
         }
 
         onClick(ev) {
@@ -41,9 +36,9 @@
 
     window.addEventListener("DOMContentLoaded", _ => {
         let elements = document.getElementsByClassName("react-delete-button");
-        for (element of elements) {
-            let text = element.innerText;
-            ReactDOM.render(e(DeleteButton, { text }), element);
+        for (let element of elements) {
+            let content = element.getElementsByTagName("button")[0].innerHTML;
+            ReactDOM.render(e(DeleteButton, { content }), element);
         }
     });
 })();

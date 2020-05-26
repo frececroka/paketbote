@@ -10,7 +10,9 @@ use thiserror::Error;
 
 use db::Db;
 
+mod models;
 mod ctx_base;
+mod referer;
 mod props;
 mod boundary;
 mod db;
@@ -121,7 +123,8 @@ pub fn run() {
             routes::repo::route_repo_html,
             routes::repo::route_repo_create,
             routes::repo::route_delete_obsolete,
-            routes::getfile::getfile,
+            routes::package::route_get_package,
+            routes::package::route_activate_package,
             routes::upload::upload,
             routes::remove::route_remove,
             routes::search::route_search,

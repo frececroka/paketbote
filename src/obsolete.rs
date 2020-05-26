@@ -28,10 +28,10 @@ fn sort_by_version(packages: &mut [&Package]) {
 #[cfg(test)]
 mod test {
     use chrono::NaiveDate;
+    use itertools::Itertools;
 
     use crate::db::models::{Compression, Package};
     use crate::obsolete::determine_obsolete_single;
-    use itertools::Itertools;
 
     #[test]
     fn test_determine_obsolete_single_no_packages() {

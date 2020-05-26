@@ -2,12 +2,15 @@ use fehler::throws;
 use rocket_contrib::templates::Template;
 use serde::Serialize;
 
-use crate::db::{get_account, get_packages_by_query, get_repo};
-use crate::db::models::{Account, Repo};
+use crate::db::get_account;
+use crate::db::get_packages_by_query;
+use crate::db::get_repo;
+use crate::db::models::Account;
+use crate::db::models::Repo;
 use crate::web::ctx_base::BaseContext;
 use crate::web::Error;
+use crate::web::models::Package;
 use crate::web::props::Props;
-use crate::web::routes::Package;
 
 #[derive(Serialize)]
 struct SearchContext {
