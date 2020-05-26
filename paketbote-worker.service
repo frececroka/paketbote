@@ -1,0 +1,12 @@
+[Unit]
+Description = Paketbote Worker
+
+[Service]
+ExecStart = /home/alarm/pacman/target/release/worker
+User = alarm
+Group = alarm
+WorkingDirectory = /home/alarm/pacman
+
+[Install]
+WantedBy = multi-user.target
+
