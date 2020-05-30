@@ -3,7 +3,8 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use fehler::throws;
 
-use crate::db::models::{NewRepo, Repo};
+use crate::db::models::NewRepo;
+use crate::db::models::Repo;
 
 use super::schema;
 
@@ -39,4 +40,30 @@ pub fn create_repo(conn: &PgConnection, repo: &NewRepo) -> Repo {
     diesel::insert_into(r::repo)
         .values(repo)
         .get_result(conn)?
+}
+
+#[throws]
+pub fn get_depends_by_repo(conn: &PgConnection, repo_id: i32) -> Vec<String> {
+    use schema::repo::dsl as r;
+    use schema::package::dsl as p;
+    use schema::package_depends::dsl as pd;
+    r::repo
+        .inner_join(p::package.inner_join(pd::package_depends))
+        .filter(r::id.eq(repo_id))
+        .select(pd::depends)
+        .distinct()
+        .load(conn)?
+}
+
+#[throws]
+pub fn get_provides_by_repo(conn: &PgConnection, repo_id: i32) -> Vec<(String, String)> {
+    use schema::repo::dsl as r;
+    use schema::package::dsl as p;
+    use schema::package_provides::dsl as pp;
+    r::repo
+        .inner_join(p::package.inner_join(pp::package_provides))
+        .filter(r::id.eq(repo_id))
+        .select((pp::provides, p::version))
+        .distinct()
+        .load(conn)?
 }

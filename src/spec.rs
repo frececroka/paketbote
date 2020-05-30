@@ -10,8 +10,8 @@ use crate::error::Error;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Spec {
-    name: String,
-    version: Option<Version>,
+    pub name: String,
+    pub version: Option<Version>,
 }
 
 impl Spec {
@@ -72,8 +72,8 @@ impl Display for Spec {
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Version {
-    version: String,
-    relation: Relation,
+    pub version: String,
+    pub relation: Relation,
 }
 
 impl Version {

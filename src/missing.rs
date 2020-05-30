@@ -5,10 +5,8 @@ use alpm::SigLevel;
 use diesel::PgConnection;
 use fehler::throws;
 
-use crate::db::get_all_packages_by_repo;
-use crate::db::get_package_depends;
-use crate::db::get_package_provides;
-use crate::db::models::PackageDepends;
+use crate::db::get_depends_by_repo;
+use crate::db::get_provides_by_repo;
 use crate::error::Error;
 use crate::error::Result;
 use crate::spec;
@@ -16,40 +14,31 @@ use crate::spec::Spec;
 
 #[throws]
 pub fn missing_dependencies(db: &PgConnection, repo_id: i32) -> Vec<Spec> {
-    let packages = get_all_packages_by_repo(db, repo_id)?;
-
     // Collect everything that is provided by this repository.
-    let provides = packages.iter()
-        .map(|pkg| -> Result<Vec<Spec>> {
-            let provides = get_package_provides(db, pkg.id)?
-                .into_iter()
-                .map(|p| -> Result<Spec> { p.provides.parse() })
-                .collect::<Result<Vec<_>>>()?.into_iter()
-                .map(|p| p.fallback_version(spec::Version::new_eq(pkg.version.to_owned())))
-                .collect::<Vec<_>>();
-            Ok(provides)
+    let provides = get_provides_by_repo(db, repo_id)?.into_iter()
+        .map(|(pp, pv)| -> Result<Spec> {
+            let version = spec::Version::new_eq(pv);
+            let spec: Spec = pp.parse()?;
+            let spec = spec.fallback_version(version);
+            Ok(spec)
         })
-        .collect::<Result<Vec<_>>>()?
-        .into_iter().flatten()
-        .collect::<HashSet<_>>();
+        .collect::<Result<HashSet<_>>>()?;
 
     // Collect everything that is required by this repository.
-    let mut dependencies = packages.iter()
-        .map(|p| -> Result<Vec<PackageDepends>> { Ok(get_package_depends(db, p.id)?) })
-        .collect::<Result<Vec<_>>>()?.into_iter().flatten()
-        .map(|d| -> Result<Spec> {d.depends.parse() })
+    let mut depends = get_depends_by_repo(db, repo_id)?.into_iter()
+        .map(|pd| -> Result<Spec> { pd.parse() })
         .collect::<Result<HashSet<_>>>()?;
 
     let alpm = create_alpm()?;
 
     // Filter out everything that is provided by the official repositories.
-    dependencies.retain(|d| alpm.syncdbs().find_satisfier(&d.to_string()).is_none());
+    depends.retain(|d| alpm.syncdbs().find_satisfier(&d.to_string()).is_none());
 
     // Filter out everything that is provided by this repository.
-    dependencies.retain(|d| !provides.iter().any(|p| p.satisfies(d)));
+    depends.retain(|d| !provides.iter().any(|p| p.satisfies(d)));
 
     // Return what's left.
-    dependencies.into_iter().collect()
+    depends.into_iter().collect()
 }
 
 #[throws(alpm::Error)]
