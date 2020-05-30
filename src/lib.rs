@@ -20,10 +20,12 @@ use crate::db::models::{Compression, Package};
 use crate::error::Error;
 
 pub mod error;
+pub mod spec;
 pub mod db;
 pub mod web;
 pub mod pkginfo;
 pub mod obsolete;
+pub mod missing;
 
 pub fn get_config() -> Config {
     Rocket::ignite().config().clone()

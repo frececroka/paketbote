@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Input/output error")]
@@ -13,6 +15,9 @@ pub enum Error {
 
     #[error("Parse error")]
     ParseInt(#[from] std::num::ParseIntError),
+
+    #[error("Alpm error")]
+    Alpm(#[from] alpm::Error),
 
     #[error("{0}")]
     Generic(String)
