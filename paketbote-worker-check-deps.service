@@ -6,6 +6,8 @@ ExecStart = /home/alarm/pacman/target/release/worker_check_deps
 User = alarm
 Group = alarm
 WorkingDirectory = /home/alarm/pacman
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy = multi-user.target
