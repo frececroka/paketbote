@@ -16,6 +16,7 @@ use serde::Serialize;
 use crate::db::create_repo;
 use crate::db::ExpectConflict;
 use crate::db::get_all_packages_by_repo;
+use crate::db::get_missing_deps;
 use crate::db::get_packages_by_repo;
 use crate::db::models::Account;
 use crate::db::models::NewRepo;
@@ -57,12 +58,19 @@ struct RepoContext {
     account: Account,
     repo: Repo,
     packages: Paginated<Package>,
+    missing_deps: Vec<String>,
     pages: Vec<usize>,
     can_edit: bool
 }
 
 impl RepoContext {
-    fn new(props: &Props, account: Account, repo: Repo, packages: Paginated<Package>) -> RepoContext {
+    fn new(
+        props: &Props,
+        account: Account,
+        repo: Repo,
+        packages: Paginated<Package>,
+        missing_deps: Vec<String>
+    ) -> RepoContext {
         let base = BaseContext::new(&props.account);
         let mut first_page = packages.current_page as isize - 3;
         let mut last_page = packages.current_page as isize + 4;
@@ -80,7 +88,7 @@ impl RepoContext {
         let can_edit = if let Some(active_account) = &props.account {
             active_account.name == account.name
         } else { false };
-        RepoContext { base, account, repo, packages, pages, can_edit }
+        RepoContext { base, account, repo, packages, missing_deps, pages, can_edit }
     }
 }
 
@@ -88,7 +96,8 @@ impl RepoContext {
 #[get("/<account>/<repo>?<p>", format = "text/html", rank = 4)]
 pub fn route_repo_html(props: Props, account: String, repo: String, p: Option<usize>) -> Template {
     let (account, repo, packages) = get_packages(&*props.db, &account, &repo, p.unwrap_or(0))?;
-    let context = RepoContext::new(&props, account, repo, packages);
+    let missing_deps = get_missing_deps(&*props.db, repo.id)?;
+    let context = RepoContext::new(&props, account, repo, packages, missing_deps);
     Template::render("repo", context)
 }
 

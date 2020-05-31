@@ -9,6 +9,7 @@ pub use package::*;
 pub use package_depends::*;
 pub use package_provides::*;
 pub use repo::*;
+pub use missing_deps::*;
 pub use token::*;
 
 mod schema;
@@ -20,6 +21,7 @@ mod package;
 mod package_depends;
 mod package_provides;
 mod repo;
+mod missing_deps;
 mod jobs;
 
 pub trait ExpectConflict {

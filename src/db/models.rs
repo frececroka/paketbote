@@ -150,6 +150,20 @@ pub struct NewRepo {
     pub owner_id: i32
 }
 
+#[derive(Debug, Queryable)]
+pub struct MissingDep {
+    pub id: i32,
+    pub repo_id: i32,
+    pub dependency: String
+}
+
+#[derive(Debug, Insertable)]
+#[table_name="missing_dep"]
+pub struct NewMissingDep {
+    pub repo_id: i32,
+    pub dependency: String
+}
+
 #[derive(Debug, Serialize, Queryable)]
 pub struct Token {
     pub id: i32,
