@@ -22,6 +22,7 @@ use crate::error::Error;
 pub mod error;
 pub mod spec;
 pub mod db;
+pub mod jobs;
 pub mod web;
 pub mod pkginfo;
 pub mod obsolete;

@@ -4,11 +4,11 @@ use diesel::result::Error::DatabaseError;
 use serde::Serialize;
 
 pub use account::*;
+pub use jobs::*;
 pub use package::*;
 pub use package_depends::*;
 pub use package_provides::*;
 pub use repo::*;
-pub use repo_action::*;
 pub use token::*;
 
 mod schema;
@@ -20,7 +20,6 @@ mod package;
 mod package_depends;
 mod package_provides;
 mod repo;
-mod repo_action;
 mod jobs;
 
 pub trait ExpectConflict {

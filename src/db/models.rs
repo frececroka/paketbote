@@ -150,66 +150,6 @@ pub struct NewRepo {
     pub owner_id: i32
 }
 
-#[derive(Debug, Clone, Copy, Serialize, FromSqlRow, AsExpression)]
-#[sql_type = "Text"]
-pub enum RepoActionOp {
-    Add, Remove
-}
-
-impl FromStr for RepoActionOp {
-    type Err = Error;
-    #[throws]
-    fn from_str(string: &str) -> Self {
-        match string {
-            "add" => RepoActionOp::Add,
-            "remove" => RepoActionOp::Remove,
-            _ => Err(format!("Cannot interpret {} as RepoActionOp", string))?
-        }
-    }
-}
-
-impl fmt::Display for RepoActionOp {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", match self {
-            RepoActionOp::Add => "add",
-            RepoActionOp::Remove => "remove",
-        })
-    }
-}
-
-impl<DB> FromSql<Text, DB> for RepoActionOp
-    where DB: Backend, String: FromSql<Text, DB>,
-{
-    #[throws(Box<dyn std::error::Error + Send + Sync>)]
-    fn from_sql(bytes: Option<&DB::RawValue>) -> Self {
-        String::from_sql(bytes)?.parse()?
-    }
-}
-
-impl<DB> ToSql<Text, DB> for RepoActionOp
-    where DB: Backend, String: ToSql<Text, DB>,
-{
-    #[throws(Box<dyn std::error::Error + Send + Sync>)]
-    fn to_sql<W: Write>(&self, out: &mut Output<W, DB>) -> IsNull {
-        self.to_string().to_sql(out)?
-    }
-}
-
-#[derive(Debug, Serialize, Queryable)]
-pub struct RepoAction {
-    pub id: i32,
-    pub package_id: i32,
-    pub action: RepoActionOp,
-    pub worker: Option<String>
-}
-
-#[derive(Debug, Serialize, Insertable)]
-#[table_name="repo_action"]
-pub struct NewRepoAction {
-    pub package_id: i32,
-    pub action: RepoActionOp
-}
-
 #[derive(Debug, Serialize, Queryable)]
 pub struct Token {
     pub id: i32,

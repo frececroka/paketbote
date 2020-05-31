@@ -7,8 +7,8 @@ use rocket::http::ContentType;
 use rocket::response::Content;
 use rocket::response::Redirect;
 
-use crate::db::create_repo_action;
-use crate::db::models::RepoActionOp;
+use crate::jobs::create_repo_action;
+use crate::jobs::RepoActionOp;
 use crate::serve_archive;
 use crate::serve_db;
 use crate::web::db::Db;

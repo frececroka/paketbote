@@ -1,8 +1,12 @@
 use fehler::throws;
 use rocket::response::Redirect;
 
-use crate::db::{create_repo_action, get_package_by_repo, get_repo_by_account_and_name, set_package_deleted};
-use crate::db::models::{Account, RepoActionOp};
+use crate::db::get_package_by_repo;
+use crate::db::get_repo_by_account_and_name;
+use crate::db::models::Account;
+use crate::db::set_package_deleted;
+use crate::jobs::create_repo_action;
+use crate::jobs::RepoActionOp;
 use crate::parse_pkg_filename;
 use crate::web::db::Db;
 use crate::web::Error;

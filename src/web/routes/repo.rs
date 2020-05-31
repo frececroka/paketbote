@@ -14,16 +14,16 @@ use rocket_contrib::templates::Template;
 use serde::Serialize;
 
 use crate::db::create_repo;
-use crate::db::create_repo_action;
 use crate::db::ExpectConflict;
 use crate::db::get_all_packages_by_repo;
 use crate::db::get_packages_by_repo;
 use crate::db::models::Account;
 use crate::db::models::NewRepo;
 use crate::db::models::Repo;
-use crate::db::models::RepoActionOp;
 use crate::db::Paginated;
 use crate::db::set_package_deleted;
+use crate::jobs::create_repo_action;
+use crate::jobs::RepoActionOp;
 use crate::obsolete::determine_obsolete;
 use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;

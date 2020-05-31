@@ -50,7 +50,7 @@ pub fn get_depends_by_repo(conn: &PgConnection, repo_id: i32) -> Vec<String> {
     r::repo
         .inner_join(p::package.inner_join(pd::package_depends))
         .filter(r::id.eq(repo_id))
-        .select((pp::provides, p::version))
+        .filter(p::active.eq(true))
         .select(pd::depends)
         .distinct()
         .load(conn)?

@@ -5,10 +5,11 @@ use diesel::result::Error;
 use diesel::sql_types::Integer;
 use fehler::throws;
 
-use crate::db::{delete_repo_action_by_package, Paginated};
-use crate::db::models::{NewPackage, Package};
+use crate::db::models::NewPackage;
+use crate::db::models::Package;
 use crate::db::package_depends::delete_package_depends;
 use crate::db::package_provides::delete_package_provides;
+use crate::db::Paginated;
 
 use super::schema;
 
@@ -106,7 +107,6 @@ pub fn get_packages_by_query(conn: &PgConnection, query: &str) -> Vec<Package> {
 #[throws]
 pub fn remove_package(conn: &PgConnection, id: i32) {
     use schema::package::dsl as p;
-    delete_repo_action_by_package(conn, id)?;
     delete_package_depends(conn, id)?;
     delete_package_provides(conn, id)?;
     diesel::delete(p::package)

@@ -10,6 +10,9 @@ pub enum Error {
     #[error("Database error")]
     Diesel(#[from] diesel::result::Error),
 
+    #[error("Serde error")]
+    Serde(#[from] serde_json::error::Error),
+
     #[error("Encoding error")]
     Utf8(#[from] std::string::FromUtf8Error),
 

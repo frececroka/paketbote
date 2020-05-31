@@ -20,14 +20,15 @@ use tar::Archive;
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Error;
-use pacman::db::delete_repo_action;
+use pacman::db::delete_job;
 use pacman::db::get_package;
-use pacman::db::get_repo_action;
-use pacman::db::models::{Package, RepoActionOp};
+use pacman::db::models::Package;
 use pacman::db::remove_package;
 use pacman::db::set_package_active;
 use pacman::format_pkg_filename;
 use pacman::get_config;
+use pacman::jobs::get_repo_action;
+use pacman::jobs::RepoActionOp;
 use pacman::parse_pkg_name;
 
 fn main() -> Result<!, Error> {
@@ -43,9 +44,9 @@ fn main() -> Result<!, Error> {
         .with_context(|| "Failed to switch to 'worker' directory")?;
 
     loop {
-        if let Some(repo_action) = get_repo_action(conn)? {
+        if let Some((id, repo_action)) = get_repo_action(conn, "worker")? {
             let package = get_package(conn, repo_action.package_id)?;
-            match repo_action.action {
+            match repo_action.operation {
                 RepoActionOp::Add => {
                     println!("Adding {:?}", package);
                     perform_repo_add(conn, &package)?;
@@ -55,7 +56,7 @@ fn main() -> Result<!, Error> {
                     perform_repo_rm(conn, &package)?;
                 }
             };
-            delete_repo_action(conn, repo_action.id)?;
+            delete_job(conn, id)?;
         } else {
             thread::sleep(Duration::from_secs(10));
         }

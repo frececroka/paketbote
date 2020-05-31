@@ -20,10 +20,10 @@ pub fn create_job(conn: &PgConnection, tag: String, job: impl Serialize) {
 
 #[throws]
 #[allow(unreachable_code)]
-pub fn claim_job(conn: &PgConnection, worker: &str) -> Option<Job> {
+pub fn claim_job(conn: &PgConnection, tag: &str, worker: &str) -> Option<Job> {
     use schema::job::dsl as j;
     loop {
-        let job = match get_job(conn)? {
+        let job = match get_job(conn, tag)? {
             Some(job) => job,
             None => return None
         };
@@ -41,9 +41,10 @@ pub fn claim_job(conn: &PgConnection, worker: &str) -> Option<Job> {
 }
 
 #[throws]
-pub fn get_job(conn: &PgConnection) -> Option<Job> {
+pub fn get_job(conn: &PgConnection, tag: &str) -> Option<Job> {
     use schema::job::dsl as j;
     j::job
+        .filter(j::tag.eq(tag))
         .filter(j::worker.is_null())
         .limit(1)
         .first(conn)

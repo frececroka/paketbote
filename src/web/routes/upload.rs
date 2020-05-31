@@ -7,9 +7,16 @@ use multipart::server::Multipart;
 use rocket::Data;
 use uuid::Uuid;
 
-use crate::db::{create_package, create_package_depends, create_package_provides, create_repo_action, get_package_by_repo, get_repo_by_account_and_name};
+use crate::db::create_package;
+use crate::db::create_package_depends;
+use crate::db::create_package_provides;
 use crate::db::ExpectConflict;
-use crate::db::models::{Account, NewPackage, RepoActionOp};
+use crate::db::get_package_by_repo;
+use crate::db::get_repo_by_account_and_name;
+use crate::db::models::Account;
+use crate::db::models::NewPackage;
+use crate::jobs::create_repo_action;
+use crate::jobs::RepoActionOp;
 use crate::parse_pkg_filename;
 use crate::pkginfo::load_pkginfo;
 use crate::save_archive;
