@@ -27,6 +27,7 @@ use pacman::db::remove_package;
 use pacman::db::set_package_active;
 use pacman::format_pkg_filename;
 use pacman::get_config;
+use pacman::jobs::create_check_deps;
 use pacman::jobs::get_repo_action;
 use pacman::jobs::RepoActionOp;
 use pacman::parse_pkg_name;
@@ -57,6 +58,7 @@ fn main() -> Result<!, Error> {
                 }
             };
             delete_job(conn, id)?;
+            create_check_deps(conn, package.repo_id)?;
         } else {
             thread::sleep(Duration::from_secs(10));
         }

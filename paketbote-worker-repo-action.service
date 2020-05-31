@@ -1,0 +1,12 @@
+[Unit]
+Description = Paketbote Repo Action Worker
+
+[Service]
+ExecStart = /home/alarm/pacman/target/release/worker_repo_action
+User = alarm
+Group = alarm
+WorkingDirectory = /home/alarm/pacman
+
+[Install]
+WantedBy = multi-user.target
+

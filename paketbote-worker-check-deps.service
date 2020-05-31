@@ -1,8 +1,8 @@
 [Unit]
-Description = Paketbote Worker
+Description = Paketbote Check Deps Worker
 
 [Service]
-ExecStart = /home/alarm/pacman/target/release/worker
+ExecStart = /home/alarm/pacman/target/release/worker_check_deps
 User = alarm
 Group = alarm
 WorkingDirectory = /home/alarm/pacman
