@@ -1,2 +1,6 @@
 /target
+/repos
 /packages
+/worker
+/pacman-db
+/.idea
