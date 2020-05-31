@@ -8,6 +8,23 @@ table! {
 }
 
 table! {
+    job (id) {
+        id -> Int4,
+        tag -> Varchar,
+        spec -> Jsonb,
+        worker -> Nullable<Varchar>,
+    }
+}
+
+table! {
+    missing_dep (id) {
+        id -> Int4,
+        repo_id -> Int4,
+        dependency -> Varchar,
+    }
+}
+
+table! {
     package (id) {
         id -> Int4,
         name -> Varchar,
@@ -66,6 +83,7 @@ table! {
     }
 }
 
+joinable!(missing_dep -> repo (repo_id));
 joinable!(package -> repo (repo_id));
 joinable!(package_depends -> package (package_id));
 joinable!(package_provides -> package (package_id));
@@ -75,6 +93,8 @@ joinable!(token -> account (account_id));
 
 allow_tables_to_appear_in_same_query!(
     account,
+    job,
+    missing_dep,
     package,
     package_depends,
     package_provides,

@@ -21,6 +21,7 @@ mod package_depends;
 mod package_provides;
 mod repo;
 mod repo_action;
+mod jobs;
 
 pub trait ExpectConflict {
     type Output;
