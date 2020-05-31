@@ -31,7 +31,7 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
 {% if missing_deps %}
 <div class="alert alert-danger" role="alert">
     <p><strong>The following dependencies are contained neither in this repository nor in the official ones:</strong></p>
-    <p>{{missing_deps | join(sep=", ")}}</p>
+    <p class="mb-0">{{missing_deps | join(sep=", ")}}</p>
 </div>
 {% endif %}
 
