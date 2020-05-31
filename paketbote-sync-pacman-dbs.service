@@ -1,0 +1,11 @@
+[Unit]
+Description = Paketbote Sync Pacman DBs
+
+[Service]
+Type = oneshot
+ExecStart = /home/alarm/pacman/target/release/sync-pacman-dbs
+User = alarm
+Group = alarm
+WorkingDirectory = /home/alarm/pacman
+Restart=on-failure
+RestartSec=10

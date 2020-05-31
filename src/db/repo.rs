@@ -17,6 +17,12 @@ pub fn get_repo(conn: &PgConnection, id: i32) -> Repo {
 }
 
 #[throws]
+pub fn get_repos(conn: &PgConnection) -> Vec<Repo> {
+    use schema::repo::dsl as r;
+    r::repo.load(conn)?
+}
+
+#[throws]
 pub fn get_repos_by_account(conn: &PgConnection, account_id: i32) -> Vec<Repo> {
     use schema::repo::dsl as r;
     r::repo

@@ -1,0 +1,10 @@
+[Unit]
+Description = Paketbote Sync Pacman DBs
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=30min
+
+[Install]
+WantedBy = multi-user.target
+

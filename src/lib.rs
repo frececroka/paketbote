@@ -11,10 +11,14 @@ extern crate rocket_contrib;
 use std::fs::File;
 use std::path::PathBuf;
 
+use diesel::Connection;
+use diesel::PgConnection;
 use fehler::throws;
-use multipart::server::{Multipart, MultipartData};
-use rocket::{Config, Rocket};
+use multipart::server::Multipart;
+use multipart::server::MultipartData;
+use rocket::Config;
 use rocket::data::DataStream;
+use rocket::Rocket;
 
 use crate::db::models::{Compression, Package};
 use crate::error::Error;
@@ -23,6 +27,7 @@ pub mod error;
 pub mod spec;
 pub mod db;
 pub mod jobs;
+pub mod alpm;
 pub mod web;
 pub mod pkginfo;
 pub mod obsolete;
@@ -30,6 +35,17 @@ pub mod missing;
 
 pub fn get_config() -> Config {
     Rocket::ignite().config().clone()
+}
+
+#[throws(diesel::result::ConnectionError)]
+pub fn connect_db() -> PgConnection {
+    let config = get_config();
+    let database = config
+        .get_table("databases").unwrap()
+        .get("main").unwrap()
+        .get("url").unwrap()
+        .as_str().unwrap();
+    PgConnection::establish(database)?
 }
 
 pub fn format_pkg_filename(package: &Package) -> String {

@@ -4,23 +4,15 @@ use std::thread;
 use std::time::Duration;
 
 use anyhow::Error;
-use diesel::Connection;
-use diesel::PgConnection;
 
+use pacman::connect_db;
 use pacman::db::delete_job;
 use pacman::db::replace_missing_deps;
-use pacman::get_config;
 use pacman::jobs::get_check_deps;
 use pacman::missing::missing_dependencies;
 
 fn main() -> Result<!, Error> {
-    let config = get_config();
-    let database = config
-        .get_table("databases").unwrap()
-        .get("main").unwrap()
-        .get("url").unwrap()
-        .as_str().unwrap();
-    let conn = &PgConnection::establish(database)?;
+    let conn = &connect_db()?;
 
     loop {
         if let Some((id, check_deps)) = get_check_deps(conn, "worker")? {

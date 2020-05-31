@@ -11,7 +11,6 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
-use diesel::Connection;
 use diesel::PgConnection;
 use fehler::throws;
 use libflate::gzip;
@@ -20,26 +19,20 @@ use tar::Archive;
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Error;
+use pacman::connect_db;
 use pacman::db::delete_job;
 use pacman::db::get_package;
 use pacman::db::models::Package;
 use pacman::db::remove_package;
 use pacman::db::set_package_active;
 use pacman::format_pkg_filename;
-use pacman::get_config;
 use pacman::jobs::create_check_deps;
 use pacman::jobs::get_repo_action;
 use pacman::jobs::RepoActionOp;
 use pacman::parse_pkg_name;
 
 fn main() -> Result<!, Error> {
-    let config = get_config();
-    let database = config
-        .get_table("databases").unwrap()
-        .get("main").unwrap()
-        .get("url").unwrap()
-        .as_str().unwrap();
-    let conn = &PgConnection::establish(database)?;
+    let conn = &connect_db()?;
 
     set_current_dir("worker")
         .with_context(|| "Failed to switch to 'worker' directory")?;

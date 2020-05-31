@@ -1,10 +1,9 @@
 use std::collections::HashSet;
 
-use alpm::Alpm;
-use alpm::SigLevel;
 use diesel::PgConnection;
 use fehler::throws;
 
+use crate::alpm;
 use crate::db::get_depends_by_repo;
 use crate::db::get_provides_by_repo;
 use crate::error::Error;
@@ -29,7 +28,7 @@ pub fn missing_dependencies(db: &PgConnection, repo_id: i32) -> Vec<Spec> {
         .map(|pd| -> Result<Spec> { pd.parse() })
         .collect::<Result<HashSet<_>>>()?;
 
-    let alpm = create_alpm()?;
+    let alpm = alpm::create("x86_64")?;
 
     // Filter out everything that is provided by the official repositories.
     depends.retain(|d| alpm.syncdbs().find_satisfier(&d.to_string()).is_none());
@@ -39,15 +38,6 @@ pub fn missing_dependencies(db: &PgConnection, repo_id: i32) -> Vec<Spec> {
 
     // Return what's left.
     depends.into_iter().collect()
-}
-
-#[throws(alpm::Error)]
-fn create_alpm() -> Alpm {
-    let alpm = Alpm::new("/", "/var/lib/pacman/")?;
-    alpm.register_syncdb("core", SigLevel::NONE)?;
-    alpm.register_syncdb("community", SigLevel::NONE)?;
-    alpm.register_syncdb("extra", SigLevel::NONE)?;
-    alpm
 }
 
 #[cfg(test)]
