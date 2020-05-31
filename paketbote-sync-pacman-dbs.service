@@ -3,7 +3,7 @@ Description = Paketbote Sync Pacman DBs
 
 [Service]
 Type = oneshot
-ExecStart = /home/alarm/pacman/target/release/sync-pacman-dbs
+ExecStart = /home/alarm/pacman/target/release/sync_pacman_dbs
 User = alarm
 Group = alarm
 WorkingDirectory = /home/alarm/pacman
