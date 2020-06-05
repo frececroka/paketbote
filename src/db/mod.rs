@@ -4,25 +4,27 @@ use diesel::result::Error::DatabaseError;
 use serde::Serialize;
 
 pub use account::*;
+pub use aur_version::*;
 pub use jobs::*;
+pub use missing_deps::*;
 pub use package::*;
 pub use package_depends::*;
 pub use package_provides::*;
 pub use repo::*;
-pub use missing_deps::*;
 pub use token::*;
 
 mod schema;
 pub mod models;
 
 mod account;
-mod token;
+mod aur_version;
+mod jobs;
+mod missing_deps;
 mod package;
 mod package_depends;
 mod package_provides;
 mod repo;
-mod missing_deps;
-mod jobs;
+mod token;
 
 pub trait ExpectConflict {
     type Output;
@@ -54,13 +56,14 @@ impl<T> Paginated<T> {
         Paginated { items, total_items, current_page, total_pages }
     }
 
-    pub fn map<U>(self, f: impl Fn(T) -> U) -> Paginated<U> {
-        let items = self.items.into_iter().map(f).collect();
-        Paginated {
+    pub fn try_map<U, F: Fn(T) -> Result<U, E>, E>(self, f: F) -> Result<Paginated<U>, E> {
+        let items = self.items.into_iter().map(f).collect::<Result<Vec<U>, E>>()?;
+        let paginated = Paginated {
             items,
             total_items: self.total_items,
             current_page: self.current_page,
             total_pages: self.total_pages
-        }
+        };
+        Ok(paginated)
     }
 }

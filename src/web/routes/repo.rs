@@ -30,6 +30,7 @@ use crate::web::ctx_base::BaseContext;
 use crate::web::db::Db;
 use crate::web::Error;
 use crate::web::Error::*;
+use crate::web::models::augment_package;
 use crate::web::models::Package;
 use crate::web::props::Props;
 use crate::web::routes::load_account;
@@ -107,7 +108,7 @@ fn get_packages(db: &PgConnection, account: &str, repo: &str, page: usize) -> (A
     let repo = load_repo(db, account.id, repo)?;
     let mut packages = get_packages_by_repo(db, repo.id, page)?;
     packages.items.sort_by_key(|p| p.name.clone());
-    let packages = packages.map(|p| p.into());
+    let packages = packages.try_map(|p| augment_package(db, p))?;
     (account, repo, packages)
 }
 

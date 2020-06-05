@@ -22,6 +22,9 @@ pub enum Error {
     #[error("Alpm error")]
     Alpm(#[from] alpm::Error),
 
+    #[error("HTTP error")]
+    Reqwest(#[from] reqwest::Error),
+
     #[error("{0}")]
     Generic(String)
 }

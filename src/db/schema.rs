@@ -8,6 +8,14 @@ table! {
 }
 
 table! {
+    aur_version (id) {
+        id -> Int4,
+        package -> Varchar,
+        version -> Varchar,
+    }
+}
+
+table! {
     job (id) {
         id -> Int4,
         tag -> Varchar,
@@ -93,6 +101,7 @@ joinable!(token -> account (account_id));
 
 allow_tables_to_appear_in_same_query!(
     account,
+    aur_version,
     job,
     missing_dep,
     package,

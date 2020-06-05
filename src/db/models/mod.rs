@@ -1,4 +1,5 @@
 pub use account::*;
+pub use aur_version::*;
 pub use compression::*;
 pub use job::*;
 pub use missing_dep::*;
@@ -9,6 +10,7 @@ pub use repo::*;
 pub use token::*;
 
 mod account;
+mod aur_version;
 mod compression;
 mod job;
 mod missing_dep;

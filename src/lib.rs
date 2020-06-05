@@ -23,15 +23,16 @@ use rocket::Rocket;
 use crate::db::models::{Compression, Package};
 use crate::error::Error;
 
-pub mod error;
-pub mod spec;
-pub mod db;
-pub mod jobs;
 pub mod alpm;
-pub mod web;
-pub mod pkginfo;
-pub mod obsolete;
+pub mod aur;
+pub mod db;
+pub mod error;
+pub mod jobs;
 pub mod missing;
+pub mod obsolete;
+pub mod pkginfo;
+pub mod spec;
+pub mod web;
 
 pub fn get_config() -> Config {
     Rocket::ignite().config().clone()

@@ -57,7 +57,12 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
         <tr class="inactive">
             {% endif %}
             <td><a href="/{{account.name}}/{{repo.name}}/{{package.archive}}">{{package.name}}</a></td>
-            <td>{{package.version}}</td>
+            <td>
+                {{package.version}}
+                {% if package.aur_version %}
+                    <span class="badge badge-success" title="{{package.aur_version}}" role="button">Update</span>
+                {% endif %}
+            </td>
             <td>{{package.arch}}</td>
             <td>{{package.created}}</td>
             {% if can_edit %}

@@ -9,6 +9,7 @@ use crate::db::models::Account;
 use crate::db::models::Repo;
 use crate::web::ctx_base::BaseContext;
 use crate::web::Error;
+use crate::web::models::augment_package;
 use crate::web::models::Package;
 use crate::web::props::Props;
 
@@ -44,12 +45,12 @@ pub fn route_search_results(props: Props, query: String) -> Template {
     let results = get_packages_by_query(&props.db, &query)?
         .into_iter()
         .map(|package| {
-            let package: Package = package.into();
+            let package = augment_package(&props.db, package)?;
             let repo = get_repo(&props.db, package.repo_id)?;
             let account = get_account(&props.db, repo.owner_id)?;
             Ok(PackageRepoAccount { package, repo, account })
         })
-        .collect::<Result<Vec<_>, diesel::result::Error>>()?;
+        .collect::<Result<Vec<_>, Error>>()?;
     let base = BaseContext::new(&props.account);
     let context = SearchResultsContext { base, query, results };
     Template::render("search-results", context)
