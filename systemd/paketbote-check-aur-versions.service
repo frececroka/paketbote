@@ -4,8 +4,8 @@ Description = Paketbote Check AUR Versions
 [Service]
 Type = oneshot
 ExecStart = /usr/bin/pb-check-aur-versions
-User = alarm
-Group = alarm
+User = paketbote
+Group = paketbote
 WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=60

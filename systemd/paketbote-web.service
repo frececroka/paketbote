@@ -3,8 +3,8 @@ Description = Paketbote Web
 
 [Service]
 ExecStart = /usr/bin/pb-web
-User = alarm
-Group = alarm
+User = paketbote
+Group = paketbote
 WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10

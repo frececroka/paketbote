@@ -3,8 +3,8 @@ Description = Paketbote Repo Action Worker
 
 [Service]
 ExecStart = /usr/bin/pb-worker-repo-action
-User = alarm
-Group = alarm
+User = paketbote
+Group = paketbote
 WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10

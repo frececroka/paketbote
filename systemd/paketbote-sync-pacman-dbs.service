@@ -4,8 +4,8 @@ Description = Paketbote Sync Pacman DBs
 [Service]
 Type = oneshot
 ExecStart = /usr/bin/pb-sync-pacman-dbs
-User = alarm
-Group = alarm
+User = paketbote
+Group = paketbote
 WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10
