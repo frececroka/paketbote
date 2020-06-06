@@ -4,6 +4,7 @@ Description = Paketbote Sync Pacman DBs
 [Service]
 Type = oneshot
 ExecStart = /usr/bin/pb-sync-pacman-dbs
+Slice = system-paketbote.slice
 User = paketbote
 Group = paketbote
 WorkingDirectory = /var/lib/paketbote

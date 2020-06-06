@@ -3,6 +3,7 @@ Description = Paketbote Repo Action Worker
 
 [Service]
 ExecStart = /usr/bin/pb-worker-repo-action
+Slice = system-paketbote.slice
 User = paketbote
 Group = paketbote
 WorkingDirectory = /var/lib/paketbote
