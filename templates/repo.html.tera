@@ -60,7 +60,7 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
             <td>
                 {{package.version}}
                 {% if package.aur_version %}
-                    <span class="badge badge-success" title="{{package.aur_version}}" role="button">Update</span>
+                    <span class="badge badge-success" title="New version available in AUR" role="button">{{package.aur_version}}</span>
                 {% endif %}
             </td>
             <td>{{package.arch}}</td>
