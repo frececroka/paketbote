@@ -2,10 +2,10 @@
 Description = Paketbote Web
 
 [Service]
-ExecStart = /home/alarm/pacman/target/release/web
+ExecStart = /usr/bin/pb-web
 User = alarm
 Group = alarm
-WorkingDirectory = /home/alarm/pacman
+WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10
 

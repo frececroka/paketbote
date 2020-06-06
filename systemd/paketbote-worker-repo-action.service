@@ -2,10 +2,10 @@
 Description = Paketbote Repo Action Worker
 
 [Service]
-ExecStart = /home/alarm/pacman/target/release/worker_repo_action
+ExecStart = /usr/bin/pb-worker-repo-action
 User = alarm
 Group = alarm
-WorkingDirectory = /home/alarm/pacman
+WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10
 

@@ -2,10 +2,10 @@
 Description = Paketbote Check Deps Worker
 
 [Service]
-ExecStart = /home/alarm/pacman/target/release/worker_check_deps
+ExecStart = /usr/bin/pb-worker-check-deps
 User = alarm
 Group = alarm
-WorkingDirectory = /home/alarm/pacman
+WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=10
 

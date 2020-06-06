@@ -3,9 +3,9 @@ Description = Paketbote Check AUR Versions
 
 [Service]
 Type = oneshot
-ExecStart = /home/alarm/pacman/target/release/check_aur_versions
+ExecStart = /usr/bin/pb-check-aur-versions
 User = alarm
 Group = alarm
-WorkingDirectory = /home/alarm/pacman
+WorkingDirectory = /var/lib/paketbote
 Restart=on-failure
 RestartSec=60
