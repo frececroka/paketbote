@@ -23,7 +23,7 @@ pub struct Package {
     pub signature: String,
     pub created: String,
     pub active: bool,
-    pub aur_version: Option<String>,
+    pub aur_package: Option<AurPackage>,
     pub repo_id: i32
 }
 
@@ -35,10 +35,7 @@ pub fn augment_package(conn: &PgConnection, package: db::models::Package) -> Pac
         .to_string();
     let archive_file = format_pkg_filename(&package);
     let signature_file = format!("{}.sig", archive_file);
-    let aur_version = if package.active {
-        get_aur_version(conn, &package.name)?
-            .filter(|v| vercmp(v, &package.version) == Ordering::Greater)
-    } else { None };
+    let aur_package = load_aur_package(conn, &package)?;
     Package {
         id: package.id,
         name: package.name,
@@ -49,7 +46,35 @@ pub fn augment_package(conn: &PgConnection, package: db::models::Package) -> Pac
         signature: signature_file,
         created: created_fmt,
         active: package.active,
-        aur_version: aur_version,
+        aur_package: aur_package,
         repo_id: package.repo_id,
+    }
+}
+
+#[throws]
+fn load_aur_package(conn: &PgConnection, package: &db::models::Package) -> Option<AurPackage> {
+    if !package.active { return None }
+    if let Some(version) = get_aur_version(conn, &package.name)? {
+        let is_newer = vercmp(&version, &package.version) == Ordering::Greater;
+        Some(AurPackage::new(&package.name, &version, is_newer))
+    } else {
+        None
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct AurPackage {
+    name: String,
+    version: String,
+    is_newer: bool,
+    url: String
+}
+
+impl AurPackage {
+    fn new(name: &str, version: &str, is_newer: bool) -> AurPackage {
+        let name = name.to_owned();
+        let version = version.to_owned();
+        let url = format!("https://aur.archlinux.org/packages/{}", name);
+        AurPackage { name, version, is_newer, url }
     }
 }
