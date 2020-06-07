@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="stylesheet" href="/public/bootstrap.min.css">
-    <link rel="stylesheet" href="/public/style.css"/>
+    <link rel="stylesheet" href="/public/bootstrap.min.css?{{base.git_ref}}">
+    <link rel="stylesheet" href="/public/style.css?{{base.git_ref}}"/>
 
     <title>Der Paketbote</title>
 </head>
@@ -31,9 +31,9 @@
     {% endblock content %}
 </div>
 
-<script src="/public/react.development.js"></script>
-<script src="/public/react-dom.development.js"></script>
-<script src="/public/delete-button.js"></script>
+<script src="/public/react.development.js?{{base.git_ref}}"></script>
+<script src="/public/react-dom.development.js?{{base.git_ref}}"></script>
+<script src="/public/delete-button.js?{{base.git_ref}}"></script>
 
 </body>
 </html>
