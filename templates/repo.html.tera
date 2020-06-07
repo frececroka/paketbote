@@ -59,7 +59,7 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
             <td><a href="/{{account.name}}/{{repo.name}}/{{package.archive}}">{{package.name}}</a></td>
             <td>
                 {{package.version}}
-                {% if package.aur_package and package.aur_package.is_newer %}
+                {% if package.active and package.aur_package and package.aur_package.is_newer %}
                     <a href="{{package.aur_package.url}}" class="badge badge-success" title="New version available in AUR" role="button">{{package.aur_package.version}}</a>
                 {% endif %}
             </td>
@@ -78,6 +78,9 @@ curl http://upload.paketbote.tk/{{account.name}}/{{repo.name}} \
                         <button class="bt-link" title="activate"><span class="icon-dot-circled"></span></button>
                     </span>
                 </form>
+                {% if package.aur_package %}
+                    <a href="{{package.aur_package.url}}" class="compact-text-icon">AUR</a>
+                {% endif %}
             </td>
             {% endif %}
         </tr>

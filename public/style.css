@@ -79,3 +79,8 @@ table td {
 .package-actions form {
     display: inline;
 }
+
+.compact-text-icon {
+    font-weight: bold;
+    letter-spacing: -0.18em;
+}

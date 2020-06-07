@@ -53,7 +53,6 @@ pub fn augment_package(conn: &PgConnection, package: db::models::Package) -> Pac
 
 #[throws]
 fn load_aur_package(conn: &PgConnection, package: &db::models::Package) -> Option<AurPackage> {
-    if !package.active { return None }
     if let Some(version) = get_aur_version(conn, &package.name)? {
         let is_newer = vercmp(&version, &package.version) == Ordering::Greater;
         Some(AurPackage::new(&package.name, &version, is_newer))
