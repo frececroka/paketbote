@@ -107,18 +107,17 @@ fn save_uploaded_files(data: Data, boundary: &str) -> ((String, u64), (String, u
     let mut signature: Option<(String, u64)> = None;
 
     let mut multipart = Multipart::with_body(data.open(), boundary);
-    multipart.foreach_entry(|entry| {
+    while let Some(entry) = multipart.read_entry()? {
         let name = entry.headers.name.borrow();
         let target = match name {
             "package" => &mut package,
             "signature" => &mut signature,
-            _ => return
+            _ => continue
         };
         let filename = Uuid::new_v4().to_string();
-        let filesize = save_archive(&filename, entry.data)
-            .expect("failed to save uploaded file");
+        let filesize = save_archive(&filename, entry.data)?;
         *target = Some((filename, filesize));
-    }).unwrap();
+    }
 
     (package.ok_or(BadRequest)?, signature.ok_or(BadRequest)?)
 }
