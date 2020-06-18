@@ -34,12 +34,12 @@ impl FromRequest<'_, '_> for LoggedIn {
 }
 
 impl FromRequest<'_, '_> for Account {
-    type Error = ();
+    type Error = Option<Error>;
     fn from_request(request: &Request) -> Outcome<Self, Self::Error> {
         match from_request_fallible(request) {
             Ok(Some(account)) => Outcome::Success(account),
-            Ok(None) => Outcome::Failure((Status::Unauthorized, ())),
-            Err(_) => Outcome::Failure((Status::InternalServerError, ()))
+            Ok(None) => Outcome::Failure((Status::Unauthorized, None)),
+            Err(e) => Outcome::Failure((Status::InternalServerError, Some(e)))
         }
     }
 }
