@@ -128,8 +128,8 @@ pub fn route_repo_create(
 {
     let account = validate_access(active_account, account)?;
 
-    if data.name.len() == 0 {
-        Err(BadRequest)?
+    if data.name.is_empty() {
+        Err(BadRequest("Field 'name' cannot be empty.".into()))?
     }
 
     let repo = NewRepo { name: data.name.clone(), owner_id: account.id };

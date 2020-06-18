@@ -1,8 +1,10 @@
 use std::backtrace::Backtrace;
 use std::error::Error as StdError;
+use std::io::Cursor;
 
 use rocket::http::Status;
 use rocket::Request;
+use rocket::Response;
 use rocket::response::Responder;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
@@ -19,21 +21,10 @@ mod db;
 mod principal;
 mod routes;
 
-#[catch(400)]
-fn catch_400_bad_request() -> String {
-    "The request you sent was malformed.\n".into()
-}
-
 #[catch(401)]
 fn catch_401_unauthorized() -> String {
     "Please provide a login cookie or access token.\n".into()
 }
-
-#[catch(409)]
-fn catch_409_conflict() -> String {
-    "Cannot create resource because of a conflict.\n".into()
-}
-
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Not found")]
@@ -46,7 +37,7 @@ pub enum Error {
     Conflict,
 
     #[error("BadRequest")]
-    BadRequest,
+    BadRequest(String),
 
     #[error("Internal server error: {0}")]
     InternalServerError(#[from] Box<dyn std::error::Error + Send + Sync>, Backtrace)
@@ -68,33 +59,45 @@ web_error_from!(crate::error::Error);
 web_error_from!(std::io::Error);
 web_error_from!(diesel::result::Error);
 
-impl Into<Status> for Error {
+impl Into<Status> for &Error {
     fn into(self) -> Status {
         use Error::*;
         match self {
             NotFound => Status::NotFound,
             Conflict => Status::Conflict,
             Unauthorized => Status::Unauthorized,
-            BadRequest => Status::BadRequest,
+            BadRequest(_) => Status::BadRequest,
             InternalServerError(_, _) => Status::InternalServerError,
         }
     }
 }
 
 impl<'r> Responder<'r> for Error {
-    fn respond_to(self, request: &Request) -> rocket::response::Result<'r> {
+    fn respond_to(self, _: &Request) -> rocket::response::Result<'r> {
         use Error::*;
-        match self {
+        let status = (&self).into();
+        let body = match &self {
             InternalServerError(_, _) => {
                 println!("{}", self);
                 if let Some(backtrace) = self.backtrace() {
                     println!("{}", backtrace);
                 }
+                "Internal Server Error.".into()
             }
-            _ => {}
-        }
-        let status: Status = self.into();
-        status.respond_to(request)
+            BadRequest(reason) =>
+                format!("Bad request. {}", reason),
+            NotFound =>
+                "Not Found.".into(),
+            Unauthorized =>
+                "Please provide a login cookie or access token.".into(),
+            Conflict =>
+                "Cannot create resource because of a conflict.".into()
+        };
+        let body = format!("{}\n", body);
+        Response::build()
+            .status(status)
+            .sized_body(Cursor::new(body))
+            .ok()
     }
 }
 
@@ -103,9 +106,7 @@ pub fn run() {
         .attach(Db::fairing())
         .attach(Template::fairing())
         .register(catchers![
-            catch_400_bad_request,
-            catch_401_unauthorized,
-            catch_409_conflict])
+            catch_401_unauthorized])
         .mount("/public",
             StaticFiles::from("public").rank(-100))
         .mount("/", routes![

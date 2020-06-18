@@ -29,7 +29,7 @@ pub fn route_remove(
         .ok_or(NotFound)?;
 
     let (name, version, arch, _) = parse_pkg_filename(&package)
-        .map_err(|_| BadRequest)?;
+        .map_err(|_| NotFound)?;
     let package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)?
         .ok_or(NotFound)?;
 

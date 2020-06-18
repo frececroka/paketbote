@@ -35,7 +35,7 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
         .ok_or(NotFound)?;
 
     let (name, version, arch, compression) = parse_pkg_filename(&package)
-        .map_err(|_| BadRequest)?;
+        .map_err(|_| BadRequest("Package file name has invalid format.".into()))?;
     let existing_package = get_package_by_repo(&*db, repo.id, &name, &version, &arch)?;
     if existing_package.is_some() {
         info!("Aborting upload early, because package already exists in this version.");
@@ -49,20 +49,18 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
           package_size, signature_size);
 
     let total_size: i32 = (package_size + signature_size)
-        .try_into().map_err(|_| BadRequest)?;
+        .try_into().map_err(|_| BadRequest("Package and signature too large.".into()))?;
     info!("The total size of uploaded files is {}.", total_size);
 
     info!("Loading PKGINFO from package...");
-    let pkginfo = load_pkginfo(compression, &package_file)?;
-    let pkgname = pkginfo
-        .get("pkgname").ok_or(BadRequest)?
-        .first().ok_or(BadRequest)?;
-    let pkgver = pkginfo
-        .get("pkgver").ok_or(BadRequest)?
-        .first().ok_or(BadRequest)?;
-    let arch = pkginfo
-        .get("arch").ok_or(BadRequest)?
-        .first().ok_or(BadRequest)?;
+    let pkginfo = load_pkginfo(compression, &package_file)
+        .map_err(|e| BadRequest(format!("Cannot load PKGINFO for archive: {}", e)))?;
+    let pkgname = pkginfo.get_single("pkgname")
+        .ok_or(BadRequest("No 'pkgname' in PKGINFO".into()))?;
+    let pkgver = pkginfo.get_single("pkgver")
+        .ok_or(BadRequest("No 'pkgver' in PKGINFO".into()))?;
+    let arch = pkginfo.get_single("arch")
+        .ok_or(BadRequest("No 'arch' in PKGINFO".into()))?;
     info!("Package has name {}, version {}, and is for architecture {}",
           pkgname, pkgver, arch);
 
@@ -82,20 +80,14 @@ pub fn upload(db: Db, active_account: Account, account: String, repo: String, pa
         .expect_conflict()?
         .ok_or(Conflict)?;
 
-    let no_depends = vec![];
-    let depends = pkginfo.get("depend")
-        .unwrap_or(&no_depends);
-    for depends in depends {
-        create_package_depends(&*db, package.id, depends.clone())?;
+    for depends in pkginfo.get("depend") {
+        create_package_depends(&*db, package.id, depends.into())?;
     }
 
     create_package_provides(&*db, package.id, package.name.clone())?;
 
-    let no_provides = vec![];
-    let provides = pkginfo.get("provides")
-        .unwrap_or(&no_provides);
-    for provides in provides {
-        create_package_provides(&*db, package.id, provides.clone())?;
+    for provides in pkginfo.get("provides") {
+        create_package_provides(&*db, package.id, provides.into())?;
     }
 
     create_repo_action(&*db, package.id, RepoActionOp::Add)?;
@@ -119,5 +111,8 @@ fn save_uploaded_files(data: Data, boundary: &str) -> ((String, u64), (String, u
         *target = Some((filename, filesize));
     }
 
-    (package.ok_or(BadRequest)?, signature.ok_or(BadRequest)?)
+    (
+        package.ok_or(BadRequest("Missing package file.".into()))?,
+        signature.ok_or(BadRequest("Missing signature file.".into()))?
+    )
 }

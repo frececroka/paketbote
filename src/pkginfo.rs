@@ -11,8 +11,23 @@ use xz2::read::XzDecoder;
 use crate::db::models::Compression;
 use crate::error::Error;
 
+pub struct Pkginfo(HashMap<String, Vec<String>>);
+
+impl Pkginfo {
+    pub fn get(&self, key: &str) -> Vec<&str> {
+        if let Some(values) = self.0.get(key) {
+            values.iter().map(|s| s as &str).collect()
+        } else {
+            Vec::new()
+        }
+    }
+    pub fn get_single(&self, key: &str) -> Option<&str> {
+        self.get(key).first().map(|r| *r)
+    }
+}
+
 #[throws]
-pub fn load_pkginfo(compression: Compression, package_file: &str) -> HashMap<String, Vec<String>> {
+pub fn load_pkginfo(compression: Compression, package_file: &str) -> Pkginfo {
     let package_path = PathBuf::new()
         .join("packages")
         .join(package_file);
@@ -32,7 +47,7 @@ fn decompress(compression: Compression, reader: impl Read + 'static) -> Box<dyn 
 }
 
 #[throws]
-fn extract_pkginfo(reader: impl Read) -> HashMap<String, Vec<String>> {
+fn extract_pkginfo(reader: impl Read) -> Pkginfo {
     let mut archive = Archive::new(reader);
     let pkginfo_entry = archive.entries()?
         .filter_map(|entry| entry.ok())
@@ -51,7 +66,7 @@ fn extract_pkginfo(reader: impl Read) -> HashMap<String, Vec<String>> {
 }
 
 #[throws]
-fn parse_pkginfo(pkginfo: String) -> HashMap<String, Vec<String>> {
+fn parse_pkginfo(pkginfo: String) -> Pkginfo {
     let properties = pkginfo.lines()
         .filter_map(|line| {
             let line = line.trim();
@@ -75,5 +90,5 @@ fn parse_pkginfo(pkginfo: String) -> HashMap<String, Vec<String>> {
     for (key, value) in properties {
         property_map.entry(key).or_default().push(value);
     }
-    property_map
+    Pkginfo(property_map)
 }
