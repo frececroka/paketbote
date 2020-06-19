@@ -10,11 +10,17 @@
             <div class="form-group">
                 <label for="username">username</label>
                 {% if msg == "wrong-username" %}
-                {% set classes = "is-invalid" %}
+                    {% set classes = "is-invalid" %}
+                    {% set autofocus = "autofocus" %}
                 {% else %}
-                {% set classes = "" %}
+                    {% set classes = "" %}
+                    {% if username or msg == "wrong-password" %}
+                        {% set autofocus = "" %}
+                    {% else %}
+                        {% set autofocus = "autofocus" %}
+                    {% endif %}
                 {% endif %}
-                <input id="username" name="username" type="text" value="{{username}}" class="form-control {{classes}}" />
+                <input id="username" name="username" type="text" value="{{username}}" class="form-control {{classes}}" {{autofocus}} />
                 {% if msg == "wrong-username" %}
                 <div class="invalid-feedback">unknown username</div>
                 {% endif %}
@@ -24,11 +30,17 @@
             <div class="form-group">
                 <label for="password">password</label>
                 {% if msg == "wrong-password" %}
-                {% set classes = "is-invalid" %}
+                    {% set classes = "is-invalid" %}
+                    {% set autofocus = "autofocus" %}
                 {% else %}
-                {% set classes = "" %}
+                    {% set classes = "" %}
+                    {% if autofocus %}
+                        {% set autofocus = "" %}
+                    {% else %}
+                        {% set autofocus = "autofocus" %}
+                    {% endif %}
                 {% endif %}
-                <input id="password" name="password" type="password" class="form-control {{classes}}"/>
+                <input id="password" name="password" type="password" class="form-control {{classes}}" {{autofocus}} />
                 {% if msg == "wrong-password" %}
                 <div class="invalid-feedback">wrong password</div>
                 {% endif %}

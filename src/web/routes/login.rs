@@ -37,7 +37,9 @@ pub fn route_perform_login(props: Props, mut cookies: Cookies, body: Form<LoginD
     let account = get_account_by_name(&*props.db, &body.username)?;
     let account =
         if let Some(account) = account { account } else {
-            return Redirect::to("/login?msg=wrong-username");
+            return Redirect::to(uri!(route_login:
+                username = &body.username,
+                msg = "wrong-username"));
         };
     let hashed_password = hash_password(&account.salt, &body.password);
     if hashed_password == account.hashed_password {
@@ -46,6 +48,8 @@ pub fn route_perform_login(props: Props, mut cookies: Cookies, body: Form<LoginD
         let target = format!("/{}", body.username);
         Redirect::to(target)
     } else {
-        Redirect::to("/login?msg=wrong-password")
+        Redirect::to(uri!(route_login:
+                username = &body.username,
+                msg = "wrong-password"))
     }
 }
