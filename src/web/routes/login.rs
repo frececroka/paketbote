@@ -14,13 +14,14 @@ use crate::web::routes::hash_password;
 #[derive(Serialize)]
 struct LoginContext {
     base: BaseContext,
+    username: Option<String>,
     msg: Option<String>
 }
 
-#[get("/login?<msg>")]
-pub fn route_login(props: Props, msg: Option<String>) -> Template {
+#[get("/login?<username>&<msg>")]
+pub fn route_login(props: Props, username: Option<String>, msg: Option<String>) -> Template {
     let base = BaseContext::new(&props.account);
-    let context = LoginContext { base, msg };
+    let context = LoginContext { base, username, msg };
     Template::render("login", context)
 }
 

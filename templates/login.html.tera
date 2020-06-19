@@ -14,7 +14,7 @@
                 {% else %}
                 {% set classes = "" %}
                 {% endif %}
-                <input id="username" name="username" type="text" class="form-control {{classes}}" />
+                <input id="username" name="username" type="text" value="{{username}}" class="form-control {{classes}}" />
                 {% if msg == "wrong-username" %}
                 <div class="invalid-feedback">unknown username</div>
                 {% endif %}
