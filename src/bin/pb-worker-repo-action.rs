@@ -39,19 +39,24 @@ fn main() -> Result<!, Error> {
 
     loop {
         if let Some((id, repo_action)) = get_repo_action(conn, "worker")? {
-            let package = get_package(conn, repo_action.package_id)?;
+            let package = get_package(conn, repo_action.package_id)
+                .with_context(|| "Failed to retrieve package entry")?;
             match repo_action.operation {
                 RepoActionOp::Add => {
                     println!("Adding {:?}", package);
-                    perform_repo_add(conn, &package)?;
+                    perform_repo_add(conn, &package)
+                        .with_context(|| "Failed to perform repo add action")?;
                 }
                 RepoActionOp::Remove => {
                     println!("Removing {:?}", package);
-                    perform_repo_rm(conn, &package)?;
+                    perform_repo_rm(conn, &package)
+                        .with_context(|| "Failed to perform repo remove action")?;
                 }
             };
-            delete_job(conn, id)?;
-            create_check_deps(conn, package.repo_id)?;
+            delete_job(conn, id)
+                .with_context(|| "Failed to delete add action")?;
+            create_check_deps(conn, package.repo_id)
+                .with_context(|| "Failed to create check deps job")?;
         } else {
             thread::sleep(Duration::from_secs(10));
         }
@@ -67,24 +72,28 @@ fn perform_repo_add(conn: &PgConnection, package: &Package) {
     remove_file(&signature_file).ok();
 
     let source = format!("../packages/{}", package.archive);
-    symlink(&source, &package_file)?;
+    symlink(&source, &package_file)
+        .with_context(|| "Failed to link package archive")?;
 
     let source = format!("../packages/{}", package.signature);
-    symlink(&source, &signature_file)?;
+    symlink(&source, &signature_file)
+        .with_context(|| "Failed to link package signature")?;
 
     let source_db = link_source_db(package.repo_id)?;
 
     let output = Command::new("repo-add")
         .arg("database.db.tar.gz")
         .arg(package_file)
-        .output()?;
+        .output()
+        .with_context(|| "Failed to run repo-add command")?;
     if !output.status.success() {
         Err(anyhow!("Invocation of repo-add failed with exit code {:?}",
             output.status.code()))?
     }
 
     update_source_db(&source_db)?;
-    set_package_active(conn, package.id)?;
+    set_package_active(conn, package.id)
+        .with_context(|| "Failed to activate package entry")?;
 }
 
 #[throws]
@@ -97,18 +106,23 @@ fn perform_repo_rm(conn: &PgConnection, package: &Package) {
         let output = Command::new("repo-remove")
             .arg("database.db.tar.gz")
             .arg(&package.name)
-            .output()?;
+            .output()
+            .with_context(|| "Failed to run repo-remove command")?;
         if !output.status.success() {
             Err(anyhow!("Invocation of repo-remove failed with exit code {:?}",
                 output.status.code()))?
         }
     }
 
-    remove_package(conn, package.id)?;
-    remove_file(format!("../packages/{}", package.archive))?;
-    remove_file(format!("../packages/{}", package.signature))?;
-
     update_source_db(&source_db)?;
+
+    remove_file(format!("../packages/{}", package.archive))
+        .with_context(|| "Failed to remove package archive")?;
+    remove_file(format!("../packages/{}", package.signature))
+        .with_context(|| "Failed to remove package signature")?;
+
+    remove_package(conn, package.id)
+        .with_context(|| "Failed to remove package entry")?;
 }
 
 #[throws]
@@ -152,6 +166,8 @@ fn link_source_db(repo_id: i32) -> String {
 #[throws]
 fn update_source_db(source_db: &String) {
     let repo_source_tmp = format!("{}.new", source_db);
-    copy("database.db.tar.gz", &repo_source_tmp)?;
-    rename(&repo_source_tmp, &source_db)?;
+    copy("database.db.tar.gz", &repo_source_tmp)
+        .with_context(|| "Failed to copy new DB")?;
+    rename(&repo_source_tmp, &source_db)
+        .with_context(|| "Failed to install new DB")?;
 }
