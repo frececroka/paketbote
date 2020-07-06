@@ -1,0 +1,10 @@
+{% extends "base" %}
+{% block content %}
+<h1>repo: {{account.name}}/{{repo.name}}</h1>
+
+<ul>
+    {% for package in packages %}
+        <li><a href="/{{account.name}}/{{repo.name}}/{{package.name}}">{{package.name}}</a></li>
+    {% endfor %}
+</ul>
+{% endblock content %}

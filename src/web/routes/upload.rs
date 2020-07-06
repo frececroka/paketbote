@@ -17,26 +17,25 @@ use tar::Archive;
 use uuid::Uuid;
 use xz2::read::XzDecoder;
 
-use crate::db::{create_package, get_repo_by_account_and_name, create_repo_add};
-use crate::db::models::NewPackage;
+use crate::db::{create_package, create_repo_add, get_repo_by_account_and_name};
+use crate::db::models::{Account, NewPackage};
 use crate::error::Error;
-
 use crate::web::boundary::Boundary;
 use crate::web::db::Db;
-use crate::web::principal::Principal;
 
 #[throws(Status)]
 #[post("/<account>/<repo>", data = "<data>")]
-pub fn upload(db: Db, principal: Principal, account: String, repo: String, boundary: Boundary, data: Data) {
-    let account = if account == principal.0.name {
-        principal.0
+pub fn upload(db: Db, active_account: Account, account: String, repo: String, boundary: Boundary, data: Data) {
+    let account = if account == active_account.name {
+        active_account
     } else {
-        warn!("The principal {} does not match the account {} provided in the URL.", principal.0.name, account);
+        warn!("The principal {} does not match the account {} provided in the URL.", active_account.name, account);
         Err(Status::Unauthorized)?
     };
 
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
-        .map_err(|_| Status::NotFound)?;
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
 
     info!("Saving uploaded files to disk...");
     let ((package_file, package_size), (signature_file, signature_size)) =

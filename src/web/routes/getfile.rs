@@ -14,9 +14,11 @@ use crate::web::db::Db;
 #[get("/<account>/<repo>/<file>")]
 pub fn getfile(db: Db, account: String, repo: String, file: String) -> File {
     let account = get_account_by_name(&*db, &account)
-        .map_err(|_| Status::NotFound)?;
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
     let repo = get_repo_by_account_and_name(&*db, account.id, &repo)
-        .map_err(|_| Status::NotFound)?;
+        .map_err(|_| Status::InternalServerError)?
+        .ok_or(Status::NotFound)?;
 
     if file.ends_with(".db") {
         serve_db(&repo)

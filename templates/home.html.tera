@@ -1,0 +1,22 @@
+{% extends "base" %}
+{% block content %}
+<h1>der paketbote</h1>
+
+<p>This service can act as your private Arch Linux package repository. After creating an account, simply upload your packages with curl (or any other HTTP client of your choice):</p>
+<pre>
+export TOKEN="[api token]"
+export PKG="linux-mainline-5.7rc3-1-x86_64.pkg.tar.xz"
+
+curl https://upload.paketbote.tk/username/repository \
+	-H "Authorization: Bearer $TOKEN" \
+	-F "package=@$PKG" \
+	-F "signature=@$PKG.sig"</pre>
+
+<p>Configure your personal repository in <code>/etc/pacman.conf</code>:</p>
+<pre>
+[username]
+Server = https://paketbote.tk/username/repository</pre>
+
+<p>And install packages with pacman:</p>
+<pre>sudo pacman -Syu linux-mainline</pre>
+{% endblock content %}

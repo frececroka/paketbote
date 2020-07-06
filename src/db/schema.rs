@@ -2,6 +2,8 @@ table! {
     account (id) {
         id -> Int4,
         name -> Varchar,
+        salt -> Varchar,
+        hashed_password -> Varchar,
     }
 }
 

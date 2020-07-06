@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Der Paketbote</title>
+    <link rel="stylesheet" href="/public/style.css"/>
+</head>
+<body>
+
+<div id="content">
+    <nav>
+        <a href="/">home</a>
+        ･
+        {% if base.account %}
+        <a href="/{{base.account}}">{{base.account}}</a>
+        ･
+        <a href="/access-tokens">access tokens</a>
+        ･
+        <a href="/logout">logout</a>
+        {% else %}
+        <a href="/login">login</a>
+        ･
+        <a href="/create-account">create account</a>
+        {% endif %}
+    </nav>
+    {% block content %}
+    {% endblock content %}
+</div>
+
+</body>
+</html>

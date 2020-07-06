@@ -1,0 +1,20 @@
+{% extends "base" %}
+{% block content %}
+<h1>access tokens</h1>
+
+<form class="one-line" method="post" action="/access-tokens">
+    <label>Create token <input type="text" name="name" placeholder="[name]"></label> <button>Create</button>
+</form>
+
+<ul>
+    {% for token in tokens %}
+    <li>
+        {{token.name}}
+        <form method="post" action="/access-tokens/{{token.id}}">
+            <input type="hidden" name="_method" value="delete">
+            <button class="bt-link">[delete]</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock content %}

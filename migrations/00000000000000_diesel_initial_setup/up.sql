@@ -1,7 +1,9 @@
 Create Table account
 (
-    id   Serial Primary Key,
-    name Varchar(255) Not Null
+    id              Serial Primary Key,
+    name            Varchar(255) Not Null Unique,
+    salt            Varchar(255) Not Null,
+    hashed_password Varchar(255) Not Null
 );
 
 Create Table token

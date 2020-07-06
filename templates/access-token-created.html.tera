@@ -1,0 +1,7 @@
+{% extends "base" %}
+{% block content %}
+<h1>access tokens</h1>
+<p>Created access token "{{token.name}}":</p>
+<pre>{{token.the_token}}</pre>
+<p><a href="/access-tokens">ok</a></p>
+{% endblock content %}
